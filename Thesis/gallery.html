@@ -1,0 +1,171 @@
+<h1 class="w3-padding">Bagatelle gallery</h1>
+
+<!-- Multi-modal RAG -->
+<section id="retrieval-section" aria-label="Image retrieval" class="w3-container w3-border w3-padding w3-margin">
+    <h3>[A.] Search for images: </h3>
+    <form id="retrieve-form" action="/retrieve" method="POST" style="display:flex; gap:8px; align-items:center;">
+        <!-- Slider to set percentage of visual vs textual data -->
+        <div class="slider-container">
+            <div class="slider-row">
+                <label for="slider">Write-ups weight:</label>
+                <input id="slider" type="range" min="0" max="1" step="0.1" value="0"/>
+                <span id="sliderValue" class="slider-value">0</span>
+            </div>
+        </div>
+        <!-- LLM refine search checkbox + radio options -->
+        <div id="llm-refine-wrapper" style="display:flex; align-items:center; gap:12px; margin-left:8px;">
+            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+                <input type="checkbox" id="llm-checkbox" name="use_llm_refine" checked/>
+                <span>Use LLM to refine search</span>
+            </label>
+            <div id="llm-options" style="display:flex; align-items:center; gap:8px;">
+                <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+                    <input type="radio" name="llm_refine_choice" value="claude-sonnet-4"
+                           id="llm-1-radio" checked/>
+                    <span>claude-sonnet-4</span>
+                </label>
+                <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+                    <input type="radio" name="llm_refine_choice" value="gpt-5" id="llm-2-radio"/>
+                    <span>gpt-5</span>
+                </label>
+            </div>
+        </div>
+        <label for="query-input" style="display:none;">Question</label>
+        <input id="query-input" name="question" type="search" placeholder="Enter your question..."
+               class="w3-padding" style="flex:1;" autocomplete="off" required/>
+        <label for="k-input" style="display:none;">K</label>
+        <input id="k-input" name="k" type="number" min="1" max="10" value="5"
+               class="w3-padding" style="width:80px;" required/>
+        <button type="submit" id="retrieve-btn" class="w3-padding">Retrieve</button>
+    </form>
+    <div id="retrieve-status" style="margin-top:8px; color:#666; font-size:90%;"></div>
+</section>
+
+<!-- Selected images (basket) -->
+<section class="w3-container w3-border w3-padding w3-margin">
+    <h3>You selected: </h3>
+    <div id="bagatelle-selected">
+        <div id="selected-image-container" class="image-container"></div>
+    </div>
+    <div id="selected-toolbar" class="w3-light-grey w3-small" style="display:none; width:100%; overflow-x:auto;
+            gap:8px; margin-bottom:8px;">
+        <button id="selected-clear" class="w3-button w3-padding">Clear</button>
+    </div>
+</section>
+
+<!-- Related artworks -->
+<section class="w3-container w3-border w3-padding w3-margin">
+    <h3>Related artworks:</h3>
+    <p id="related-status" style="color:#666; font-size:90%;"></p>
+    <div id="related-results" class="image-container"></div>
+</section>
+
+<!-- Graph exploration -->
+<section class="w3-container w3-border w3-padding w3-margin">
+    <h3>Graph exploration:</h3>
+
+    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:8px;">
+        <label for="graph-mode" style="font-size:90%; white-space:nowrap;">Graph mode:</label>
+        <select id="graph-mode" style="padding:4px 8px; font-size:90%; border:1px solid #ccc; border-radius:4px;">
+            <option value="text_clip">Text — CLIP-L14</option>
+            <option value="image_clip">Image — CLIP-L14</option>
+        </select>
+        <button id="graph-clear" class="w3-button w3-padding">Clear graph</button>
+        <p id="graph-status" style="color:#666; font-size:90%; margin:0;">
+            Click an artwork to start building the exploration graph.
+        </p>
+    </div>
+
+    <div id="graph-view"></div>
+</section>
+
+<!-- Workshop generator -->
+<section id="workshop-section" class="w3-container w3-border w3-padding w3-margin">
+    <h3>[B.] Create a workshop programme from selected images</h3>
+    <form id="workshop-form" action="/generate_program" method="POST"
+          style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        <label for="llm-selector" style="display:flex; flex-direction:column; font-size:90%;">LLM
+            <div class="radio-selector w3-border w3-padding">
+                <label>
+                    <input type="radio" name="llm_model" value="claude-sonnet-4" checked>
+                    claude-sonnet-4
+                </label>
+                <label>
+                    <input type="radio" name="llm_model" value="gpt-5">
+                    gpt-5
+                </label>
+            </div>
+        </label>
+{#        <label for="context-selector" style="display:flex; flex-direction:column; font-size:90%;">Context#}
+{#            <div class="radio-selector w3-border w3-padding">#}
+{#                <label>#}
+{#                    <input type="radio" name="context" value="write-ups" checked>#}
+{#                    write-ups#}
+{#                </label>#}
+{#                <label>#}
+{#                    <input type="radio" name="context" value="images">#}
+{#                    images#}
+{#                </label>#}
+{#            </div>#}
+{#        </label>#}
+
+        <label for="num-days" style="display:flex; flex-direction:column; font-size:90%;">
+            Num days
+            <input id="num-days" name="num_days" type="number" min="1" max="14" value="3"
+                   class="w3-padding" style="width:80px;">
+        </label>
+
+        <label for="theme" style="display:flex; flex-direction:column; font-size:90%; flex:1;">
+            Theme of workshop
+            <input id="theme" name="theme" type="text" placeholder="e.g. Taking Flight"  class="w3-padding">
+        </label>
+
+        <label for="audience" style="display:flex; flex-direction:column; font-size:90%; flex:1;">
+            Type of audience
+            <input id="audience" name="audience" type="text" placeholder="e.g. pathology residents"
+                    class="w3-padding">
+        </label>
+
+        <button type="submit" id="workshop-submit" class="w3-padding" style="margin-top:16px;">Generate programme</button>
+    </form>
+
+    <div id="workshop-status" style="margin-top:8px; color:#666; font-size:90%;"></div>
+    <div id="workshop-result" style="margin-top:12px;">
+        <!-- Toolbar: hidden when no content -->
+        <div id="workshop-result-toolbar" class="w3-light-grey w3-small" style="display:none; width:100%; overflow-x:auto;
+            white-space:nowrap; gap:8px; margin-bottom:8px;">
+            <button id="workshop-download" class="w3-button w3-padding" >Download as
+                HTML
+            </button>
+            <button id="workshop-clear" class="w3-button w3-padding">Clear</button>
+        </div>
+        <!-- Formatted result area -->
+        <div id="workshop-result-content"
+             style="padding:16px; border:1px solid #e0e0e0; border-radius:6px; background:#fff;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.04); font-family: Arial, sans-serif; line-height:1.45;
+                    color:#222; max-width:100%; overflow:auto;">
+            <!-- Program HTML injection goes here -->
+        </div>
+    </div>
+</section>
+
+<!-- Image catalogue -->
+<section class="w3-container w3-border w3-padding w3-margin">
+    <h3>Image catalogue: </h3>
+    <div id="bagatelle-container">
+        <div id="settings-container">
+            <div id="checkbox-container" class="checkbox-wrapper-14"></div>
+            <button id="update-button" style="float: right; padding: 6px;">▼ Update</button>
+        </div>
+        <div id="image-container" class="image-container">
+        </div>
+    </div>
+</section>
+
+<!-- Back Button -->
+<a href="{{ url_for('back') }}" class="button" style="float:right;">Back</a>
+<script>
+    let images = {{ bagatelle_data | safe }}
+</script>
+<script src="/static/js/gallery.js" type="module"></script>
+

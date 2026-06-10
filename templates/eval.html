@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Bagatelle — Evaluation Mode</title>
+    <link rel="stylesheet" href="/static/styles/w3.css"/>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: sans-serif; background: #f5f5f5; }
+
+        /* ── Header ─────────────────────────────────────── */
+        .eval-header {
+            background: #1a1a2e; color: #fff;
+            padding: 10px 20px; display: flex; align-items: center; gap: 16px;
+        }
+        .eval-header h2 { margin: 0; font-size: 1.1rem; }
+        .eval-header a { color: #aed6f1; font-size: 0.9rem; text-decoration: none; }
+        .eval-header a:hover { text-decoration: underline; }
+        #header-info { margin-left: auto; font-size: 0.85rem; color: #ccc; }
+
+        /* ── Setup screen ────────────────────────────────── */
+        #session-setup {
+            max-width: 480px; margin: 60px auto; background: #fff;
+            border-radius: 8px; padding: 32px; box-shadow: 0 2px 12px rgba(0,0,0,.12);
+        }
+        #session-setup h3 { margin-top: 0; }
+        #session-setup label { display: block; margin-bottom: 6px; font-weight: 600; }
+        #session-setup input[type=text] {
+            width: 100%; padding: 8px; border: 1px solid #ccc;
+            border-radius: 4px; margin-bottom: 16px; font-size: 1rem;
+        }
+        .mode-btn {
+            padding: 10px 20px; border: 2px solid #1a1a2e; border-radius: 6px;
+            background: #fff; cursor: pointer; font-size: 0.95rem; margin-right: 8px;
+        }
+        .mode-btn.active { background: #1a1a2e; color: #fff; }
+        #start-btn {
+            display: block; width: 100%; margin-top: 20px; padding: 12px;
+            background: #2ecc71; color: #fff; border: none; border-radius: 6px;
+            font-size: 1rem; cursor: pointer; font-weight: 600;
+        }
+        #start-btn:hover { background: #27ae60; }
+
+        /* ── Task / Free bars ────────────────────────────── */
+        #eval-workspace { display: none; flex-direction: column; height: calc(100vh - 48px); }
+        #task-bar, #free-bar {
+            background: #fff; border-bottom: 1px solid #ddd;
+            padding: 8px 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+        }
+        #task-bar { display: none; }
+        #free-bar { display: none; }
+        .task-progress { font-weight: 600; font-size: 0.95rem; }
+        .task-artwork { color: #555; }
+        #seed-thumb { height: 48px; border-radius: 4px; border: 2px solid #1a1a2e; }
+        .bar-btn {
+            padding: 6px 14px; border: 1px solid #999; border-radius: 4px;
+            background: #fff; cursor: pointer; font-size: 0.9rem;
+        }
+        .bar-btn:hover { background: #f0f0f0; }
+        .bar-btn.primary { background: #1a1a2e; color: #fff; border-color: #1a1a2e; }
+        .bar-btn.primary:hover { background: #2c2c4e; }
+        #free-bar input[type=text] {
+            flex: 1; min-width: 200px; padding: 6px 10px;
+            border: 1px solid #ccc; border-radius: 4px;
+        }
+        #free-results { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+        .free-thumb {
+            height: 60px; border-radius: 4px; cursor: pointer;
+            border: 2px solid transparent; transition: border-color .2s;
+        }
+        .free-thumb:hover { border-color: #2ecc71; }
+        .free-thumb.selected { border-color: #1a1a2e; }
+
+        /* ── Panels row ──────────────────────────────────── */
+        #panels-row {
+            display: flex; flex: 1; overflow: hidden; gap: 0;
+        }
+        .eval-panel {
+            flex: 1; display: flex; flex-direction: column;
+            border-right: 2px solid #ddd; overflow: hidden;
+        }
+        .eval-panel:last-child { border-right: none; }
+        .panel-label {
+            background: #eaf0fb; padding: 6px 12px; font-weight: 700;
+            font-size: 0.9rem; border-bottom: 1px solid #ccd6e8; display: flex; align-items: center; gap: 8px;
+        }
+        .panel-label.right-label { background: #fef9f0; border-color: #f0ddb0; }
+        .panel-controls {
+            padding: 6px 10px; background: #fafafa; border-bottom: 1px solid #eee;
+            display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+        }
+        .panel-controls select, .panel-controls input[type=text] {
+            padding: 4px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.85rem;
+        }
+        .panel-controls label { font-size: 0.8rem; color: #555; white-space: nowrap; }
+        .panel-clear-btn {
+            padding: 3px 10px; border: 1px solid #bbb; border-radius: 4px;
+            background: #fff; cursor: pointer; font-size: 0.8rem; margin-left: auto;
+        }
+        .panel-graph {
+            flex: 1; overflow: auto; position: relative; background: #fff;
+        }
+        .panel-status {
+            padding: 4px 10px; font-size: 0.8rem; color: #888; min-height: 22px;
+            background: #fff; border-top: 1px solid #eee;
+        }
+        .panel-stats {
+            padding: 5px 10px; font-size: 0.78rem; color: #555;
+            background: #f8f9fa; border-top: 1px solid #eee;
+            display: flex; gap: 14px; flex-wrap: wrap;
+        }
+        .panel-stats span { white-space: nowrap; }
+        .panel-placeholder {
+            color: #aaa; font-style: italic; padding: 30px 20px; text-align: center;
+        }
+
+        /* ── Graph (same classes as gallery) ─────────────── */
+        .graph-canvas {
+            position: relative; overflow: visible;
+        }
+        .graph-edges {
+            position: absolute; top: 0; left: 0; pointer-events: none; overflow: visible;
+        }
+        .graph-edge {
+            fill: none; stroke: #bbb; stroke-width: 2; pointer-events: none;
+        }
+        .graph-edge-hitbox {
+            fill: none; stroke: transparent; stroke-width: 14; cursor: pointer; pointer-events: stroke;
+        }
+        .graph-edge-label-bg {
+            fill: #f0f0f0; stroke: #ddd; stroke-width: 1;
+        }
+        .graph-edge-label {
+            fill: #555; font-size: 10px; text-anchor: middle; dominant-baseline: middle;
+            pointer-events: none;
+        }
+        /* Edge rating colours */
+        .edge-rated-yes   { stroke: #27ae60 !important; stroke-width: 3 !important; }
+        .edge-rated-maybe { stroke: #e67e22 !important; stroke-width: 3 !important; stroke-dasharray: 6 4 !important; }
+        .edge-rated-no    { stroke: #bbb !important; stroke-width: 2 !important; stroke-dasharray: 2 4 !important; }
+
+        .graph-node {
+            position: absolute; width: 110px; height: 130px; display: flex; flex-direction: column;
+            align-items: center; padding: 4px; background: #fff;
+            border: 2px solid #ccc; border-radius: 6px; cursor: pointer;
+            font-size: 11px; text-align: center; gap: 2px; overflow: hidden;
+            box-shadow: 0 1px 4px rgba(0,0,0,.1); transition: border-color .2s;
+            box-sizing: border-box;
+        }
+        .graph-node:hover { border-color: #1a1a2e; }
+        .graph-node img { width: 90px; height: 68px; flex-shrink: 0; object-fit: cover; border-radius: 3px; }
+        .graph-node span { max-width: 102px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-shrink: 0; }
+        .graph-node-root { border-color: #2ecc71; border-width: 3px; }
+        .graph-node-category {
+            font-size: 9px; color: #777; background: #f0f0f0;
+            border-radius: 3px; padding: 1px 4px; max-width: 100px;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+
+        /* ── Rating panel ────────────────────────────────── */
+        #rating-bar {
+            background: #fff; border-top: 2px solid #1a1a2e;
+            padding: 10px 20px; display: flex; flex-direction: column; gap: 8px;
+        }
+        .rating-row {
+            display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+        }
+        .rating-label { font-size: 0.85rem; font-weight: 600; min-width: 280px; }
+        .rating-options { display: flex; gap: 8px; }
+        .rating-options label {
+            display: flex; align-items: center; gap: 4px; font-size: 0.85rem; cursor: pointer;
+            padding: 4px 10px; border: 1px solid #ccc; border-radius: 20px; transition: all .15s;
+        }
+        .rating-options label:hover { border-color: #1a1a2e; background: #eef; }
+        .rating-options input[type=radio] { display: none; }
+        .rating-options input[type=radio]:checked + span {
+            /* JS handles visual feedback */
+        }
+        .rating-options label.chosen { background: #1a1a2e; color: #fff; border-color: #1a1a2e; }
+        .rating-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        #comments-input {
+            flex: 1; min-width: 200px; padding: 5px 8px;
+            border: 1px solid #ccc; border-radius: 4px; font-size: 0.85rem;
+        }
+        .submit-btn {
+            padding: 8px 20px; background: #1a1a2e; color: #fff; border: none;
+            border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 600;
+        }
+        .submit-btn:hover { background: #2c2c4e; }
+        .download-btn {
+            padding: 8px 16px; background: #27ae60; color: #fff; border: none;
+            border-radius: 6px; cursor: pointer; font-size: 0.85rem;
+        }
+        .download-btn:hover { background: #229954; }
+        #submit-status { font-size: 0.85rem; color: #27ae60; font-weight: 600; }
+        #edge-ratings-info { font-size: 0.8rem; color: #888; }
+
+        /* ── Edge rating popup ───────────────────────────── */
+        #edge-popup {
+            position: fixed; background: #fff; border: 1px solid #ccc;
+            border-radius: 8px; padding: 14px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+            z-index: 1000; min-width: 260px; max-width: 340px;
+        }
+        #edge-popup-title { font-weight: 700; font-size: 0.9rem; margin-bottom: 4px; }
+        #edge-popup-score { color: #888; font-size: 0.8rem; margin-bottom: 6px; }
+        #edge-popup-expl { font-size: 0.83rem; color: #444; margin-bottom: 10px; font-style: italic; }
+        .edge-popup-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+        .edge-rate-btn {
+            flex: 1; padding: 6px 10px; border: none; border-radius: 6px;
+            cursor: pointer; font-size: 0.85rem; font-weight: 600;
+        }
+        .edge-rate-btn.yes    { background: #d5f5e3; color: #1e8449; }
+        .edge-rate-btn.maybe  { background: #fdebd0; color: #a04000; }
+        .edge-rate-btn.no     { background: #f0f0f0; color: #555; }
+        .edge-rate-btn:hover  { filter: brightness(0.92); }
+        .edge-cancel-btn {
+            margin-top: 8px; width: 100%; padding: 4px; border: 1px solid #ccc;
+            border-radius: 4px; background: #fff; cursor: pointer; font-size: 0.8rem;
+        }
+
+        /* ── Node info popup ─────────────────────────────── */
+        #node-info-popup {
+            position: fixed; right: 16px; top: 80px;
+            width: 270px; background: #fff;
+            border: 1px solid #ccc; border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,.2);
+            z-index: 998; padding: 12px; overflow-y: auto; max-height: 65vh;
+        }
+        #node-info-popup header {
+            display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;
+        }
+        #node-info-title { font-weight: 700; font-size: 0.88rem; line-height: 1.3; flex: 1; }
+        #node-info-close {
+            background: none; border: none; cursor: pointer; font-size: 1rem;
+            color: #888; padding: 0 0 0 8px; line-height: 1;
+        }
+        #node-info-popup img { width: 100%; border-radius: 4px; margin-bottom: 6px; }
+        #node-info-category {
+            font-size: 0.78rem; color: #777; background: #f0f0f0;
+            border-radius: 3px; padding: 2px 6px; display: inline-block; margin-bottom: 6px;
+        }
+        #node-info-preview { font-size: 0.82rem; color: #444; margin: 0; line-height: 1.5; }
+
+        /* ── Free-mode selection lightbox ───────────────── */
+        #free-select-lightbox {
+            position: fixed; inset: 0; background: rgba(0,0,0,.82);
+            z-index: 2000; display: none; align-items: center; justify-content: center;
+        }
+        #free-select-lightbox.visible { display: flex; }
+        #free-select-content {
+            background: #fff; border-radius: 10px; padding: 20px;
+            max-width: 520px; width: 90vw; text-align: center;
+            box-shadow: 0 8px 40px rgba(0,0,0,.4);
+        }
+        #free-select-content img {
+            max-width: 100%; max-height: 55vh; border-radius: 6px; margin-bottom: 12px;
+        }
+        #free-select-name {
+            font-size: 0.9rem; color: #444; margin-bottom: 14px;
+            word-break: break-all;
+        }
+        .free-select-btns { display: flex; gap: 10px; justify-content: center; }
+        .free-pick-btn {
+            padding: 10px 22px; background: #1a1a2e; color: #fff;
+            border: none; border-radius: 6px; cursor: pointer; font-size: 0.95rem; font-weight: 600;
+        }
+        .free-pick-btn:hover { background: #2c2c4e; }
+        .free-back-btn {
+            padding: 10px 22px; background: #fff; color: #444;
+            border: 1px solid #bbb; border-radius: 6px; cursor: pointer; font-size: 0.95rem;
+        }
+        .free-back-btn:hover { background: #f0f0f0; }
+
+        /* ── Seed lightbox ───────────────────────────────── */
+        #img-lightbox {
+            position: fixed; inset: 0; background: rgba(0,0,0,.82);
+            z-index: 2000; display: none; align-items: center; justify-content: center;
+            cursor: zoom-out;
+        }
+        #img-lightbox.visible { display: flex; }
+        #img-lightbox img { max-width: 88vw; max-height: 88vh; border-radius: 6px; box-shadow: 0 4px 32px rgba(0,0,0,.5); }
+
+        /* ── Graph node info button ──────────────────────── */
+        .graph-node-info-btn {
+            position: absolute; top: 3px; right: 3px;
+            width: 18px; height: 18px; border-radius: 50%;
+            background: rgba(255,255,255,.9); border: 1px solid #bbb;
+            font-size: 10px; cursor: pointer; line-height: 1;
+            display: none; align-items: center; justify-content: center;
+            padding: 0; color: #555;
+        }
+        .graph-node:hover .graph-node-info-btn { display: flex; }
+    </style>
+</head>
+<body>
+
+<!-- ── Header ──────────────────────────────────────────── -->
+<header class="eval-header">
+    <h2>🔬 Bagatelle — Evaluation Mode</h2>
+    <a href="/">← Back to Gallery</a>
+    <span id="header-info"></span>
+</header>
+
+<!-- ── Session setup ───────────────────────────────────── -->
+<div id="session-setup">
+    <h3>Start Evaluation Session</h3>
+    <label for="evaluator-name">Your name / evaluator ID</label>
+    <input type="text" id="evaluator-name" placeholder="e.g. Dr. Smith" autocomplete="off"/>
+
+    <label>Evaluation mode</label>
+    <div style="margin-bottom: 16px;">
+        <button class="mode-btn active" id="btn-structured" onclick="selectMode('structured')">
+            📋 Structured (16 seed artworks)
+        </button>
+        <button class="mode-btn" id="btn-free" onclick="selectMode('free')">
+            🔍 Free exploration
+        </button>
+    </div>
+    <p style="color:#666; font-size:0.85rem; margin: 0 0 12px;">
+        <strong>Structured:</strong> Rate 16 pre-selected artworks side by side across two strategies.<br/>
+        <strong>Free:</strong> Search any artwork, build graphs freely, and rate edges as you go.
+    </p>
+    <button id="start-btn" onclick="startEval()">Start evaluation →</button>
+</div>
+
+<!-- ── Main evaluation workspace ───────────────────────── -->
+<div id="eval-workspace">
+
+    <!-- Task bar (structured mode) -->
+    <div id="task-bar">
+        <span class="task-progress">Artwork <span id="task-num">1</span> / 16</span>
+        <img id="seed-thumb" src="" alt="seed" style="cursor:zoom-in;" title="Click to enlarge"
+             onclick="document.getElementById('lightbox-img').src=this.src; document.getElementById('img-lightbox').classList.add('visible');"/>
+        <span class="task-artwork" id="task-name"></span>
+        <button class="bar-btn primary" onclick="loadBothPanels()">↓ Load in both panels</button>
+        <button class="bar-btn" onclick="prevTask()">← Prev</button>
+        <button class="bar-btn" onclick="nextTask()">Next →</button>
+        <span id="task-status" style="font-size:0.8rem; color:#888;"></span>
+    </div>
+
+    <!-- Free bar (free mode) -->
+    <div id="free-bar">
+        <input type="text" id="free-query" placeholder="Search for an artwork…" onkeydown="if(event.key==='Enter')freeSearch()"/>
+        <select id="free-search-mode" style="padding:5px 8px; border:1px solid #ccc; border-radius:4px;">
+            <option value="text">Text</option>
+            <option value="image">Image</option>
+            <option value="combined">Combined</option>
+        </select>
+        <button class="bar-btn primary" onclick="freeSearch()">Search</button>
+        <span id="free-status" style="font-size:0.8rem; color:#888;"></span>
+        <div id="free-results-row" style="width:100%; display:flex; gap:6px; flex-wrap:wrap; padding-top:4px;"></div>
+    </div>
+
+    <!-- ── Two-panel comparison ───────────────────────── -->
+    <div id="panels-row">
+
+        <!-- LEFT panel -->
+        <div class="eval-panel" id="panel-left-wrap">
+            <div class="panel-label">
+                🅐 Strategy Left
+            </div>
+            <div class="panel-controls">
+                <label>Mode:</label>
+                <select id="mode-left" onchange="onModeChange('left')">
+                    <option value="text_clip">Text</option>
+                    <option value="image_clip">Image</option>
+                    <option value="combined_clip">Combined</option>
+                    <option value="query_targeted">Query-targeted</option>
+                </select>
+                <label>Desc:</label>
+                <select id="desc-left">
+                    <option value="legacy">GPT-4o</option>
+                    <option value="claude">Claude</option>
+                    <option value="gpt5">GPT-5</option>
+                </select>
+                <input type="text" id="query-left" placeholder="Query…"
+                       style="display:none; width:130px;" title="Query for query-targeted mode"/>
+                <button class="panel-clear-btn" onclick="panels.left.clear()">Clear</button>
+            </div>
+            <div class="panel-graph" id="graph-left">
+                <p class="panel-placeholder">Load an artwork to start.</p>
+            </div>
+            <div class="panel-status" id="status-left"></div>
+            <div class="panel-stats" id="stats-left"></div>
+        </div>
+
+        <!-- RIGHT panel -->
+        <div class="eval-panel" id="panel-right-wrap">
+            <div class="panel-label right-label">
+                🅑 Strategy Right
+            </div>
+            <div class="panel-controls">
+                <label>Mode:</label>
+                <select id="mode-right" onchange="onModeChange('right')" >
+                    <option value="text_clip">Text</option>
+                    <option value="image_clip" selected>Image</option>
+                    <option value="combined_clip">Combined</option>
+                    <option value="query_targeted">Query-targeted</option>
+                </select>
+                <label>Desc:</label>
+                <select id="desc-right">
+                    <option value="legacy">GPT-4o</option>
+                    <option value="claude">Claude</option>
+                    <option value="gpt5">GPT-5</option>
+                </select>
+                <input type="text" id="query-right" placeholder="Query…"
+                       style="display:none; width:130px;" title="Query for query-targeted mode"/>
+                <button class="panel-clear-btn" onclick="panels.right.clear()">Clear</button>
+            </div>
+            <div class="panel-graph" id="graph-right">
+                <p class="panel-placeholder">Load an artwork to start.</p>
+            </div>
+            <div class="panel-status" id="status-right"></div>
+            <div class="panel-stats" id="stats-right"></div>
+        </div>
+    </div>
+
+    <!-- ── Rating panel ─────────────────────────────────── -->
+    <div id="rating-bar">
+        <div class="rating-row">
+            <span class="rating-label">1. More relevant connections?</span>
+            <div class="rating-options" id="opts-relevance">
+                <label onclick="chooseRating(this,'relevance','left')"><input type="radio" name="q-relevance" value="left"/><span>🅐 Left</span></label>
+                <label onclick="chooseRating(this,'relevance','tie')"><input type="radio" name="q-relevance" value="tie"/><span>Tie</span></label>
+                <label onclick="chooseRating(this,'relevance','right')"><input type="radio" name="q-relevance" value="right"/><span>🅑 Right</span></label>
+            </div>
+        </div>
+        <div class="rating-row">
+            <span class="rating-label">2. Which side would you continue exploring?</span>
+            <div class="rating-options" id="opts-exploration">
+                <label onclick="chooseRating(this,'exploration','left')"><input type="radio" name="q-exploration" value="left"/><span>🅐 Left</span></label>
+                <label onclick="chooseRating(this,'exploration','tie')"><input type="radio" name="q-exploration" value="tie"/><span>Tie</span></label>
+                <label onclick="chooseRating(this,'exploration','right')"><input type="radio" name="q-exploration" value="right"/><span>🅑 Right</span></label>
+            </div>
+        </div>
+        <div class="rating-row">
+            <span class="rating-label">3. Better edge explanations?</span>
+            <div class="rating-options" id="opts-explanations">
+                <label onclick="chooseRating(this,'explanations','left')"><input type="radio" name="q-explanations" value="left"/><span>🅐 Left</span></label>
+                <label onclick="chooseRating(this,'explanations','tie')"><input type="radio" name="q-explanations" value="tie"/><span>Tie</span></label>
+                <label onclick="chooseRating(this,'explanations','right')"><input type="radio" name="q-explanations" value="right"/><span>🅑 Right</span></label>
+            </div>
+        </div>
+        <div class="rating-actions">
+            <span style="font-size:0.82rem; color:#888;">Comments:</span>
+            <input type="text" id="comments-input" placeholder="Optional notes about this comparison…"/>
+            <span id="edge-ratings-info"></span>
+            <button class="submit-btn" onclick="submitRating()">Submit ✓</button>
+            <button class="download-btn" onclick="downloadResults()">⬇ Download JSON</button>
+            <span id="submit-status"></span>
+        </div>
+    </div>
+</div>
+
+<!-- ── Free-mode selection lightbox ─────────────────────── -->
+<div id="free-select-lightbox">
+    <div id="free-select-content">
+        <img id="free-select-img" src="" alt=""/>
+        <div id="free-select-name"></div>
+        <div class="free-select-btns">
+            <button class="free-pick-btn" onclick="confirmFreeSelect()">✓ Pick this artwork</button>
+            <button class="free-back-btn" onclick="closeFreeSelectLightbox()">← Choose different</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── Seed image lightbox ───────────────────────────────── -->
+<div id="img-lightbox" onclick="this.classList.remove('visible')">
+    <img id="lightbox-img" src="" alt=""/>
+</div>
+
+<!-- ── Node info popup ───────────────────────────────────── -->
+<div id="node-info-popup" hidden>
+    <header>
+        <span id="node-info-title"></span>
+        <button id="node-info-close" onclick="closeNodeInfo()">✕</button>
+    </header>
+    <img id="node-info-img" src="" alt=""/>
+    <div id="node-info-category" style="display:none;"></div>
+    <p id="node-info-preview"></p>
+</div>
+
+<!-- ── Edge rating popup ─────────────────────────────────── -->
+<div id="edge-popup" hidden>
+    <div id="edge-popup-title"></div>
+    <div id="edge-popup-score"></div>
+    <div id="edge-popup-expl"></div>
+    <div class="edge-popup-btns">
+        <button class="edge-rate-btn yes"   onclick="rateEdge('yes')">✓ Meaningful</button>
+        <button class="edge-rate-btn maybe" onclick="rateEdge('maybe')">~ Partial</button>
+        <button class="edge-rate-btn no"    onclick="rateEdge('no')">✗ Not meaningful</button>
+    </div>
+    <button class="edge-cancel-btn" onclick="closeEdgePopup()">Cancel</button>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════
+//  DATA
+// ════════════════════════════════════════════════════════
+const SEED_ARTWORKS = [
+    { filename: "CopyofWatercolourillustrationfromaJapaneseworkonsmallpoxentitledToshinseiyoneedtofindsource.jpg", title: "Japanese Smallpox Manuscript", category: "Dermatology" },
+    { filename: "daltonrashofsores1856.jpg", title: "Dalton – Rash of Sores (1856)", category: "Dermatology" },
+    { filename: "1200pxMonaLisabyLeonardodaVincifromC2RMFretouchedjpgLDL.jpg", title: "Mona Lisa (LDL diagnosis)", category: "Cardiovascular Disease" },
+    { filename: "1200pxGentileschijudith1jpggoiter.jpg", title: "Gentileschi – Judith (goiter)", category: "Endocrinology" },
+    { filename: "1566428886483sleepingcupidcaravaggiohormonalpaintingsaboutsyndromesanddiseasesmedium.jpg", title: "Caravaggio – Sleeping Cupid (hormonal)", category: "Endocrinology" },
+    { filename: "1280pxTombofGiulianodeMedicinightmichelangelobreastcancer.jpg", title: "Michelangelo – Night (breast cancer)", category: "Oncology" },
+    { filename: "1280pxRembrandtTheAnatomyLessonofDrNicolaesTulp.jpg", title: "Rembrandt – The Anatomy Lesson", category: "Anatomy" },
+    { filename: "ArtistUnknownAYoungVenetianWomanAged23DepictedBeforeandAfterContractingCholera1831.jpg", title: "Young Venetian Woman – Before/After Cholera", category: "Infectious Diseases" },
+    { filename: "15PieterBruegeltheElderTheBeggars1568.jpg", title: "Bruegel – The Beggars (1568)", category: "Conditions Tracey" },
+    { filename: "20GaetanoGiulioZumboThePlague17thCenturyPlaguepg112.jpeg", title: "Zumbo – The Plague (17th C.)", category: "Infectious Diseases" },
+    { filename: "1024pxJohnHenryFuseliTheNightmarejpg1781.jpg", title: "Fuseli – The Nightmare (1781)", category: "Psychiatry" },
+    { filename: "EdvardMunchTheSickChild1885Norwayoiloncanvas120X119cmtuberculosis.jpg", title: "Munch – The Sick Child (1885)", category: "Infectious Diseases" },
+    { filename: "14JusepedeRiberaTheClubfoot1642.jpg", title: "Ribera – The Club Foot (1642)", category: "Genetic Disorders" },
+    { filename: "12GerritvanHonthorstTheDentist1622Toothache.jpg", title: "Honthorst – The Dentist (1622)", category: "Dental Medicine" },
+    { filename: "AncientEgyptianMedicineEgypt.jpg", title: "Ancient Egyptian Medicine", category: "Medical Manuscripts" },
+    { filename: "64520891tamerlane624jpglegandhanddisabilityfrominjuries.jpg", title: "Tamerlane (leg & hand disability)", category: "Musculoskeletal" },
+];
+
+// ════════════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════════════
+let evalMode = 'structured';  // 'structured' | 'free'
+let evaluatorName = '';
+let taskIndex = 0;
+
+const evalState = {
+    ratings: [],          // submitted comparisons
+    edgeRatings: [],      // per-edge ratings (all sessions)
+};
+
+let pendingEdge = null;   // { edge, panelId }
+
+// ════════════════════════════════════════════════════════
+//  GRAPH PANEL CLASS
+// ════════════════════════════════════════════════════════
+class GraphPanel {
+    constructor(panelId) {
+        this.panelId = panelId;
+        this.nodes = new Map();
+        this.edges = new Map();
+        this.root = null;
+        this.expansionCount = 0;
+        this.modesUsed = new Set();
+    }
+
+    get mode()       { return document.getElementById(`mode-${this.panelId}`)?.value || 'text_clip'; }
+    get descSource() { return document.getElementById(`desc-${this.panelId}`)?.value || 'legacy'; }
+    get query()      { const v = document.getElementById(`query-${this.panelId}`)?.value?.trim(); return v || null; }
+    get statusEl()   { return document.getElementById(`status-${this.panelId}`); }
+    get statsEl()    { return document.getElementById(`stats-${this.panelId}`); }
+    get container()  { return document.getElementById(`graph-${this.panelId}`); }
+
+    getExcludePaths(selectedPath) {
+        return Array.from(this.nodes.keys()).filter(p => p !== selectedPath);
+    }
+
+    async fetchRelated(imagePath, excludePaths = []) {
+        const mode = this.mode;
+        const effectiveMode = (mode === 'query_targeted' || this.query) ? 'query_targeted' : mode;
+
+        const body = {
+            image_path: imagePath,
+            k: 3,
+            exclude_paths: excludePaths,
+            mode: effectiveMode,
+            description_source: this.descSource,
+            image_model: 'clip',
+            text_weight: 0.5,
+            image_weight: 0.5,
+            query_weight: 0.4,
+        };
+
+        if (effectiveMode === 'query_targeted' && this.query) {
+            body.query = this.query;
+        }
+
+        if (this.statusEl) this.statusEl.textContent = '⏳ Loading…';
+
+        try {
+            const resp = await fetch('/related', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const data = await resp.json();
+            if (this.statusEl) this.statusEl.textContent =
+                `${(this.nodes.size || 0) + (data.related?.length || 0)} artworks loaded. Click any node to expand.`;
+            return data;
+        } catch (e) {
+            if (this.statusEl) this.statusEl.textContent = `Error: ${e.message}`;
+            return null;
+        }
+    }
+
+    addExpansion(selectedPath, relatedItems, selectedItem = null) {
+        if (!selectedPath || !relatedItems) return;
+        if (!this.root) this.root = selectedPath;
+        this.expansionCount++;
+        this.modesUsed.add(this.mode);
+
+        let selectedDepth = 0;
+        if (!this.nodes.has(selectedPath)) {
+            this.nodes.set(selectedPath, {
+                id: selectedPath, image_path: selectedPath,
+                label: selectedItem?.title || getFileName(selectedPath),
+                category: selectedItem?.category || '',
+                text_preview: selectedItem?.text_preview || '',
+                text_full: selectedItem?.text_full || '',
+                visits: 1, depth: 0,
+            });
+        } else {
+            const ex = this.nodes.get(selectedPath);
+            ex.visits++;
+            selectedDepth = ex.depth || 0;
+            if (selectedItem?.title) ex.label = selectedItem.title;
+        }
+
+        relatedItems.forEach((item, index) => {
+            const relPath = item.image_path;
+            if (!relPath) return;
+            const depth = selectedDepth + 1;
+            if (!this.nodes.has(relPath)) {
+                this.nodes.set(relPath, {
+                    id: relPath, image_path: relPath,
+                    label: item.title || getFileName(relPath),
+                    category: item.category || '',
+                    score: item.score,
+                    text_preview: item.text_preview || '',
+                    text_full: item.text_full || '',
+                    visits: 0, depth, parent: selectedPath, siblingIndex: index,
+                });
+            } else {
+                const ex = this.nodes.get(relPath);
+                ex.depth = Math.min(ex.depth || depth, depth);
+                if (!ex.parent) ex.parent = selectedPath;
+            }
+
+            const edgeId = `${selectedPath}|||${relPath}`;
+            if (!this.edges.has(edgeId)) {
+                this.edges.set(edgeId, {
+                    id: edgeId, source: selectedPath, target: relPath,
+                    score: item.score,
+                    explanation: item.edge_explanation || '',
+                    panel: this.panelId,
+                });
+            }
+        });
+
+        this.render();
+        this.renderStats();
+    }
+
+    clear() {
+        this.nodes.clear();
+        this.edges.clear();
+        this.root = null;
+        this.expansionCount = 0;
+        this.modesUsed.clear();
+        if (this.container) this.container.innerHTML = '<p class="panel-placeholder">Load an artwork to start.</p>';
+        if (this.statusEl) this.statusEl.textContent = '';
+        if (this.statsEl)  this.statsEl.innerHTML = '';
+    }
+
+    render() {
+        const container = this.container;
+        if (!container) return;
+        container.innerHTML = '';
+
+        const nodes = Array.from(this.nodes.values());
+        const edges = Array.from(this.edges.values());
+
+        if (nodes.length === 0) {
+            container.innerHTML = '<p class="panel-placeholder">Load an artwork to start.</p>';
+            return;
+        }
+
+        const NW = 110, NH = 130, CG = 190, RG = 30, MX = 55, MY = 40;
+
+        const byDepth = new Map();
+        nodes.forEach(n => {
+            const d = n.depth || 0;
+            if (!byDepth.has(d)) byDepth.set(d, []);
+            byDepth.get(d).push(n);
+        });
+
+        const depths = Array.from(byDepth.keys()).sort((a, b) => a - b);
+        const maxDepth = Math.max(...depths, 0);
+        let maxCol = 1;
+        byDepth.forEach(arr => maxCol = Math.max(maxCol, arr.length));
+
+        const W = Math.max(480, MX * 2 + maxDepth * CG + NW);
+        const H = Math.max(320, MY * 2 + maxCol * (NH + RG));
+
+        const positions = new Map();
+        depths.forEach(d => {
+            const arr = byDepth.get(d);
+            arr.sort((a, b) => (a.parent || '').localeCompare(b.parent || '') || a.label.localeCompare(b.label));
+            const colH = arr.length * NH + (arr.length - 1) * RG;
+            const startY = Math.max(MY, (H - colH) / 2);
+            arr.forEach((n, i) => positions.set(n.id, { x: MX + d * CG, y: startY + i * (NH + RG) }));
+        });
+
+        const canvas = document.createElement('div');
+        canvas.className = 'graph-canvas';
+        canvas.style.cssText = `width:${W}px; height:${H}px; position:relative;`;
+
+        // SVG edges
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('class', 'graph-edges');
+        svg.setAttribute('width', W);
+        svg.setAttribute('height', H);
+        svg.style.cssText = 'position:absolute;top:0;left:0;overflow:visible;pointer-events:none;';
+
+        const panelRef = this;
+
+        edges.forEach(edge => {
+            const sp = positions.get(edge.source);
+            const tp = positions.get(edge.target);
+            if (!sp || !tp) return;
+
+            const sx = sp.x + NW/2, sy = sp.y + NH/2;
+            const tx = tp.x + NW/2, ty = tp.y + NH/2;
+            const mx = (sx + tx) / 2;
+            const d = `M ${sx} ${sy} C ${mx} ${sy}, ${mx} ${ty}, ${tx} ${ty}`;
+
+            // Check if this edge has been rated
+            const rated = evalState.edgeRatings.find(r => r.edgeId === edge.id && r.panelId === panelRef.panelId);
+            const ratedClass = rated ? `edge-rated-${rated.rating}` : '';
+
+            const vis = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            vis.setAttribute('d', d);
+            vis.setAttribute('class', `graph-edge ${ratedClass}`);
+            svg.appendChild(vis);
+
+            // Score label
+            const lx = (sx + tx) / 2, ly = (sy + ty) / 2;
+            const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            bg.setAttribute('x', lx - 18); bg.setAttribute('y', ly - 9);
+            bg.setAttribute('width', 36); bg.setAttribute('height', 18); bg.setAttribute('rx', 8);
+            bg.setAttribute('class', 'graph-edge-label-bg');
+            svg.appendChild(bg);
+
+            const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            txt.setAttribute('x', lx); txt.setAttribute('y', ly);
+            txt.setAttribute('class', 'graph-edge-label');
+            txt.textContent = Number(edge.score || 0).toFixed(2);
+            svg.appendChild(txt);
+
+            // Hitbox — click to rate
+            const hitbox = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            hitbox.setAttribute('d', d);
+            hitbox.setAttribute('class', 'graph-edge-hitbox');
+            hitbox.style.pointerEvents = 'stroke';
+            hitbox.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openEdgeRatingPopup(edge, panelRef, e.clientX, e.clientY);
+            });
+            svg.appendChild(hitbox);
+        });
+
+        canvas.appendChild(svg);
+
+        // Nodes
+        nodes.forEach(node => {
+            const pos = positions.get(node.id);
+            if (!pos) return;
+
+            const el = document.createElement('button');
+            el.className = 'graph-node' + (node.id === panelRef.root ? ' graph-node-root' : '');
+            el.style.left = `${pos.x}px`;
+            el.style.top = `${pos.y}px`;
+            el.title = node.label;
+
+            const img = document.createElement('img');
+            img.src = '/' + node.image_path;
+            img.alt = node.label;
+            img.loading = 'lazy';
+
+            const lbl = document.createElement('span');
+            lbl.textContent = node.label;
+
+            el.appendChild(img);
+            el.appendChild(lbl);
+
+            if (node.category) {
+                const cat = document.createElement('span');
+                cat.className = 'graph-node-category';
+                cat.textContent = node.category;
+                el.appendChild(cat);
+            }
+
+            // ℹ info button
+            const infoBtn = document.createElement('button');
+            infoBtn.className = 'graph-node-info-btn';
+            infoBtn.title = 'View description';
+            infoBtn.textContent = 'ℹ';
+            infoBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                showNodeInfo(node);
+            });
+            el.appendChild(infoBtn);
+
+            el.addEventListener('click', async () => {
+                const data = await panelRef.fetchRelated(node.image_path, panelRef.getExcludePaths(node.image_path));
+                if (data) panelRef.addExpansion(data.selected.image_path, data.related, data.selected);
+            });
+
+            canvas.appendChild(el);
+        });
+
+        container.appendChild(canvas);
+    }
+
+    renderStats() {
+        if (!this.statsEl) return;
+        const nodes = Array.from(this.nodes.values());
+        const edges = Array.from(this.edges.values());
+        if (nodes.length === 0) { this.statsEl.innerHTML = ''; return; }
+
+        const scores = edges.map(e => e.score).filter(s => s != null && !isNaN(s));
+        const avg = scores.length ? (scores.reduce((a, b) => a + b, 0) / scores.length) : null;
+        const variance = (scores.length > 1 && avg != null)
+            ? Math.sqrt(scores.reduce((s, x) => s + (x - avg) ** 2, 0) / scores.length)
+            : null;
+
+        const catCounts = {};
+        nodes.forEach(n => { if (n.category) catCounts[n.category] = (catCounts[n.category] || 0) + 1; });
+        const topCats = Object.entries(catCounts).sort((a, b) => b[1] - a[1])
+            .slice(0, 2).map(([c, n]) => `${c} (${n})`).join(', ') || '—';
+
+        const modeLabels = { text_clip: 'Text', image_clip: 'Image', combined_clip: 'Combined', query_targeted: 'Query-targeted' };
+
+        this.statsEl.innerHTML = [
+            `<span>Nodes: <strong>${nodes.length}</strong></span>`,
+            `<span>Edges: <strong>${edges.length}</strong></span>`,
+            avg != null ? `<span>Avg score: <strong>${avg.toFixed(3)}</strong></span>` : '',
+            variance != null ? `<span>Variance: <strong>${variance.toFixed(3)}</strong></span>` : '',
+            `<span>Top cats: <strong>${topCats}</strong></span>`,
+            `<span>Mode: <strong>${modeLabels[this.mode] || this.mode}</strong></span>`,
+        ].filter(Boolean).join('');
+    }
+
+    getStatsData() {
+        const nodes = Array.from(this.nodes.values());
+        const edges = Array.from(this.edges.values());
+        const scores = edges.map(e => e.score).filter(s => s != null && !isNaN(s));
+        const avg = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : null;
+        const variance = (scores.length > 1 && avg != null)
+            ? Math.sqrt(scores.reduce((s, x) => s + (x - avg) ** 2, 0) / scores.length)
+            : null;
+        const catCounts = {};
+        nodes.forEach(n => { if (n.category) catCounts[n.category] = (catCounts[n.category] || 0) + 1; });
+
+        return {
+            nodes: nodes.length, edges: edges.length,
+            avg_score: avg != null ? parseFloat(avg.toFixed(4)) : null,
+            score_variance: variance != null ? parseFloat(variance.toFixed(4)) : null,
+            categories: catCounts,
+            expansion_count: this.expansionCount,
+            mode: this.mode,
+            description_source: this.descSource,
+        };
+    }
+}
+
+// ════════════════════════════════════════════════════════
+//  HELPERS
+// ════════════════════════════════════════════════════════
+function getFileName(path) {
+    return (path || '').split(/[\\/]/).pop();
+}
+
+// ════════════════════════════════════════════════════════
+//  PANEL INSTANCES
+// ════════════════════════════════════════════════════════
+const panels = {
+    left:  new GraphPanel('left'),
+    right: new GraphPanel('right'),
+};
+
+// ════════════════════════════════════════════════════════
+//  SESSION SETUP
+// ════════════════════════════════════════════════════════
+function selectMode(mode) {
+    evalMode = mode;
+    document.getElementById('btn-structured').classList.toggle('active', mode === 'structured');
+    document.getElementById('btn-free').classList.toggle('active', mode === 'free');
+}
+
+function startEval() {
+    evaluatorName = document.getElementById('evaluator-name').value.trim();
+    if (!evaluatorName) { alert('Please enter your name / evaluator ID.'); return; }
+
+    document.getElementById('session-setup').style.display = 'none';
+    document.getElementById('eval-workspace').style.display = 'flex';
+    document.getElementById('header-info').textContent =
+        `Evaluator: ${evaluatorName}  |  Mode: ${evalMode === 'structured' ? 'Structured' : 'Free'}`;
+
+    if (evalMode === 'structured') {
+        document.getElementById('task-bar').style.display = 'flex';
+        // Remove query-targeted option — no query input in structured mode
+        ['mode-left', 'mode-right'].forEach(id => {
+            const sel = document.getElementById(id);
+            const opt = sel.querySelector('option[value="query_targeted"]');
+            if (opt) opt.remove();
+        });
+        loadTask(0);
+    } else {
+        document.getElementById('free-bar').style.display = 'flex';
+    }
+}
+
+// ════════════════════════════════════════════════════════
+//  STRUCTURED MODE
+// ════════════════════════════════════════════════════════
+function loadTask(index) {
+    if (index < 0 || index >= SEED_ARTWORKS.length) return;
+    taskIndex = index;
+    const seed = SEED_ARTWORKS[index];
+
+    document.getElementById('task-num').textContent = index + 1;
+    document.getElementById('task-name').textContent = seed.title;
+    document.getElementById('seed-thumb').src =
+        `/static/data/images/${seed.filename}`;
+    document.getElementById('task-status').textContent = '';
+}
+
+function prevTask() {
+    if (taskIndex > 0) loadTask(taskIndex - 1);
+}
+
+function nextTask() {
+    if (taskIndex < SEED_ARTWORKS.length - 1) loadTask(taskIndex + 1);
+    else {
+        document.getElementById('task-status').textContent = 'All 16 artworks completed!';
+    }
+}
+
+async function loadBothPanels() {
+    const seed = SEED_ARTWORKS[taskIndex];
+    const imagePath = `static/data/images/${seed.filename}`;
+
+    document.getElementById('task-status').textContent = '⏳ Loading both panels…';
+
+    panels.left.clear();
+    panels.right.clear();
+
+    // Fetch both in parallel
+    const [dataL, dataR] = await Promise.all([
+        panels.left.fetchRelated(imagePath, []),
+        panels.right.fetchRelated(imagePath, []),
+    ]);
+
+    if (dataL) panels.left.addExpansion(dataL.selected.image_path, dataL.related, dataL.selected);
+    if (dataR) panels.right.addExpansion(dataR.selected.image_path, dataR.related, dataR.selected);
+
+    document.getElementById('task-status').textContent =
+        dataL && dataR ? '✓ Both panels loaded. Explore and rate below.' : 'Some panels failed to load.';
+}
+
+// ════════════════════════════════════════════════════════
+//  FREE MODE
+// ════════════════════════════════════════════════════════
+async function freeSearch() {
+    const query = document.getElementById('free-query').value.trim();
+    if (!query) return;
+    const mode = document.getElementById('free-search-mode').value;
+    const statusEl = document.getElementById('free-status');
+    const resultsRow = document.getElementById('free-results-row');
+
+    statusEl.textContent = '⏳ Searching…';
+    resultsRow.innerHTML = '';
+
+    try {
+        const resp = await fetch('/retrieve', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ question: query, k: 8, search_mode: mode }),
+        });
+        const data = await resp.json();
+        const paths = data.response || [];
+
+        statusEl.textContent = paths.length ? `${paths.length} results. Click one to load in both panels.` : 'No results.';
+
+        paths.forEach(p => {
+            const img = document.createElement('img');
+            img.src = '/' + p;
+            img.className = 'free-thumb';
+            img.title = getFileName(p);
+            img.addEventListener('click', () => openFreeSelectLightbox(p));
+            resultsRow.appendChild(img);
+        });
+    } catch (e) {
+        statusEl.textContent = `Error: ${e.message}`;
+    }
+}
+
+let pendingFreeArtwork = null;
+
+function openFreeSelectLightbox(imagePath) {
+    pendingFreeArtwork = imagePath;
+    document.getElementById('free-select-img').src = '/' + imagePath;
+    document.getElementById('free-select-name').textContent = getFileName(imagePath);
+    document.getElementById('free-select-lightbox').classList.add('visible');
+}
+
+function closeFreeSelectLightbox() {
+    document.getElementById('free-select-lightbox').classList.remove('visible');
+    pendingFreeArtwork = null;
+}
+
+async function confirmFreeSelect() {
+    if (!pendingFreeArtwork) return;
+    const path = pendingFreeArtwork;
+    closeFreeSelectLightbox();
+
+    // Highlight selection in results row
+    document.querySelectorAll('.free-thumb').forEach(t => t.classList.remove('selected'));
+    const sel = document.querySelector(`.free-thumb[src="/${path}"]`);
+    if (sel) sel.classList.add('selected');
+
+    await loadFreeArtwork(path);
+}
+
+async function loadFreeArtwork(imagePath) {
+    // Highlight selection
+    document.querySelectorAll('.free-thumb').forEach(t => t.classList.remove('selected'));
+    const selected = document.querySelector(`.free-thumb[src="/${imagePath}"]`);
+    if (selected) selected.classList.add('selected');
+
+    panels.left.clear();
+    panels.right.clear();
+
+    const [dataL, dataR] = await Promise.all([
+        panels.left.fetchRelated(imagePath, []),
+        panels.right.fetchRelated(imagePath, []),
+    ]);
+
+    if (dataL) panels.left.addExpansion(dataL.selected.image_path, dataL.related, dataL.selected);
+    if (dataR) panels.right.addExpansion(dataR.selected.image_path, dataR.related, dataR.selected);
+}
+
+// ════════════════════════════════════════════════════════
+//  MODE CHANGE (show/hide query field)
+// ════════════════════════════════════════════════════════
+function onModeChange(panelId) {
+    const mode = document.getElementById(`mode-${panelId}`).value;
+    const queryEl = document.getElementById(`query-${panelId}`);
+    if (queryEl) queryEl.style.display = mode === 'query_targeted' ? 'inline-block' : 'none';
+}
+
+// ════════════════════════════════════════════════════════
+//  EDGE RATING
+// ════════════════════════════════════════════════════════
+function openEdgeRatingPopup(edge, panel, clientX, clientY) {
+    pendingEdge = { edge, panelId: panel.panelId };
+
+    const popup = document.getElementById('edge-popup');
+    const srcName = getFileName(edge.source);
+    const tgtName = getFileName(edge.target);
+
+    document.getElementById('edge-popup-title').textContent =
+        `Rate: ${panel.nodes.get(edge.source)?.label || srcName} → ${panel.nodes.get(edge.target)?.label || tgtName}`;
+    document.getElementById('edge-popup-score').textContent = `Similarity score: ${Number(edge.score||0).toFixed(3)}  |  Panel: ${panel.panelId === 'left' ? '🅐 Left' : '🅑 Right'}`;
+    document.getElementById('edge-popup-expl').textContent = edge.explanation || '(no explanation available)';
+
+    popup.removeAttribute('hidden');
+
+    // Position near cursor, keep inside viewport
+    const vw = window.innerWidth, vh = window.innerHeight;
+    let left = clientX + 10, top = clientY + 10;
+    if (left + 340 > vw) left = vw - 350;
+    if (top + 200 > vh) top = vh - 210;
+    popup.style.left = `${left}px`;
+    popup.style.top  = `${top}px`;
+}
+
+function rateEdge(rating) {
+    if (!pendingEdge) return;
+    const { edge, panelId } = pendingEdge;
+
+    // Remove existing rating for same edge if any
+    const idx = evalState.edgeRatings.findIndex(r => r.edgeId === edge.id && r.panelId === panelId);
+    if (idx > -1) evalState.edgeRatings.splice(idx, 1);
+
+    evalState.edgeRatings.push({
+        edgeId: edge.id,
+        panelId,
+        source: edge.source,
+        target: edge.target,
+        score: edge.score,
+        explanation: edge.explanation,
+        rating,
+        timestamp: new Date().toISOString(),
+    });
+
+    // Re-render the panel so edge colour updates
+    panels[panelId].render();
+
+    updateEdgeRatingsInfo();
+    closeEdgePopup();
+}
+
+function closeEdgePopup() {
+    document.getElementById('edge-popup').setAttribute('hidden', '');
+    pendingEdge = null;
+}
+
+function updateEdgeRatingsInfo() {
+    const el = document.getElementById('edge-ratings-info');
+    const count = evalState.edgeRatings.length;
+    el.textContent = count ? `${count} edge${count !== 1 ? 's' : ''} rated` : '';
+}
+
+// ════════════════════════════════════════════════════════
+//  COMPARISON RATINGS (radio buttons)
+// ════════════════════════════════════════════════════════
+const currentRatings = { relevance: null, exploration: null, explanations: null };
+
+function chooseRating(labelEl, dimension, value) {
+    currentRatings[dimension] = value;
+    // Visual feedback
+    document.querySelectorAll(`#opts-${dimension} label`).forEach(l => l.classList.remove('chosen'));
+    labelEl.classList.add('chosen');
+}
+
+// ════════════════════════════════════════════════════════
+//  SUBMIT
+// ════════════════════════════════════════════════════════
+async function submitRating() {
+    const statusEl = document.getElementById('submit-status');
+
+    const entry = {
+        type: evalMode,
+        evaluator: evaluatorName,
+        timestamp: new Date().toISOString(),
+        task_index: evalMode === 'structured' ? taskIndex : null,
+        artwork: evalMode === 'structured' ? SEED_ARTWORKS[taskIndex] : null,
+        left_strategy: { mode: panels.left.mode, description_source: panels.left.descSource },
+        right_strategy: { mode: panels.right.mode, description_source: panels.right.descSource },
+        ratings: {
+            relevance:    currentRatings.relevance,
+            exploration:  currentRatings.exploration,
+            explanations: currentRatings.explanations,
+            comments:     document.getElementById('comments-input').value.trim(),
+        },
+        edge_ratings: evalState.edgeRatings.filter(r => true), // all so far
+        graph_stats: {
+            left:  panels.left.getStatsData(),
+            right: panels.right.getStatsData(),
+        },
+    };
+
+    evalState.ratings.push(entry);
+
+    statusEl.textContent = '⏳ Saving…';
+
+    try {
+        const resp = await fetch('/submit_evaluation', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(entry),
+        });
+        const data = await resp.json();
+        statusEl.textContent = data.success ? `✓ Saved (${data.total_entries} total)` : '⚠ Save failed';
+    } catch (e) {
+        statusEl.textContent = `⚠ Network error: ${e.message}`;
+    }
+
+    // Reset ratings UI
+    Object.keys(currentRatings).forEach(k => { currentRatings[k] = null; });
+    document.querySelectorAll('.rating-options label').forEach(l => l.classList.remove('chosen'));
+    document.querySelectorAll('.rating-options input[type=radio]').forEach(r => r.checked = false);
+    document.getElementById('comments-input').value = '';
+
+    // In structured mode, advance to next task automatically
+    if (evalMode === 'structured' && taskIndex < SEED_ARTWORKS.length - 1) {
+        setTimeout(() => { nextTask(); }, 800);
+    }
+}
+
+// ════════════════════════════════════════════════════════
+//  DOWNLOAD
+// ════════════════════════════════════════════════════════
+function downloadResults() {
+    const blob = new Blob([JSON.stringify({
+        evaluator: evaluatorName,
+        export_timestamp: new Date().toISOString(),
+        ratings: evalState.ratings,
+        all_edge_ratings: evalState.edgeRatings,
+    }, null, 2)], { type: 'application/json' });
+
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `bagatelle_eval_${evaluatorName.replace(/\s+/g,'_')}_${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+}
+
+// ════════════════════════════════════════════════════════
+//  NODE INFO POPUP
+// ════════════════════════════════════════════════════════
+function showNodeInfo(node) {
+    const popup = document.getElementById('node-info-popup');
+    document.getElementById('node-info-title').textContent = node.label;
+    document.getElementById('node-info-img').src = '/' + node.image_path;
+
+    const catEl = document.getElementById('node-info-category');
+    if (node.category) {
+        catEl.textContent = node.category;
+        catEl.style.display = 'inline-block';
+    } else {
+        catEl.style.display = 'none';
+    }
+
+    const preview = node.text_preview || '';
+    const full    = node.text_full || '';
+    const previewEl = document.getElementById('node-info-preview');
+    previewEl.textContent = preview || '(No description loaded yet — expand this node first.)';
+
+    // Full description toggle
+    let detailsEl = document.getElementById('node-info-details');
+    if (!detailsEl) {
+        detailsEl = document.createElement('details');
+        detailsEl.id = 'node-info-details';
+        detailsEl.style.cssText = 'margin-top:8px; font-size:0.8rem;';
+        const summary = document.createElement('summary');
+        summary.style.cssText = 'cursor:pointer; color:#555; font-size:0.8rem;';
+        summary.textContent = 'Show full description';
+        const fullP = document.createElement('p');
+        fullP.id = 'node-info-full';
+        fullP.style.cssText = 'margin:6px 0 0; color:#333; line-height:1.5; white-space:pre-wrap;';
+        detailsEl.appendChild(summary);
+        detailsEl.appendChild(fullP);
+        popup.appendChild(detailsEl);
+    }
+
+    const fullTextEl = document.getElementById('node-info-full');
+    if (full && full !== preview) {
+        fullTextEl.textContent = full;
+        detailsEl.style.display = 'block';
+        detailsEl.open = false; // collapsed by default
+    } else {
+        detailsEl.style.display = 'none';
+    }
+
+    popup.removeAttribute('hidden');
+}
+
+function closeNodeInfo() {
+    document.getElementById('node-info-popup').setAttribute('hidden', '');
+}
+
+// Close popup on outside click
+document.addEventListener('click', (e) => {
+    const edgePopup = document.getElementById('edge-popup');
+    if (!edgePopup.hidden && !edgePopup.contains(e.target)) closeEdgePopup();
+
+    const nodePopup = document.getElementById('node-info-popup');
+    if (!nodePopup.hidden && !nodePopup.contains(e.target) &&
+        !e.target.classList.contains('graph-node-info-btn')) {
+        closeNodeInfo();
+    }
+});
+</script>
+</body>
+</html>

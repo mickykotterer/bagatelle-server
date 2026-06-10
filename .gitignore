@@ -1,0 +1,27 @@
+# Secrets
+.env
+
+# Python virtual environment
+.venv/
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Model caches (large, re-downloaded on deploy)
+.cache/
+*.cache
+
+# Evaluation results (not committed — accumulate locally)
+evaluations/results.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

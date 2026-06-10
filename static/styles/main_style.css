@@ -1,0 +1,98 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f5f5f5;
+    margin: 5%;
+}
+
+.listContainer{
+    margin-top: 50px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    background-color: white;
+    border-radius: 4px;
+}
+
+.cross{
+	position: absolute;
+    left: 94%;
+    top: 0;
+	border: 0;
+	background-color: transparent;
+}
+
+.painting-item {
+    padding: 2px;
+    margin: 5px;
+    border: 1px solid #ddd;
+    cursor: pointer;
+    width: 95%;
+}
+
+.painting-item:hover {
+    background-color: #f0f0f0;
+}
+
+.painting-title {
+    font-weight: bold;
+}
+
+.artist-year {
+    color: #555;
+}
+
+.url-input {
+    margin-top: 5px;
+    margin-bottom: 5px;
+    display: flex;
+    padding: 2px;
+    width: 100%;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+/* Style for the search button */
+.search-btn {
+    background-color: #41bad4;  /* Button color (can be customized) */
+    color: white;               /* Icon color */
+    border: none;               /* Remove border */
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    margin-bottom: 20px;
+    float: right;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+/* Change button color on hover */
+.search-btn:hover {
+    background-color: #229fb1;
+}
+
+.retriever_container {
+    width: 60%;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    padding: 10px;
+    margin-inline: auto;
+    display: flex;
+    flex-direction: column;
+    height: 100vh; /* Full viewport height */
+}
+
+.row1 {
+    flex: 0 0 20%; /* 20% height */
+}
+
+.row2 {
+    flex: 1; /* Takes the remaining 80% */
+}
+
+.slider-container { max-width: 480px; margin: 0 auto; }
+.slider-value { font-weight: 700; margin-left: .5rem; }
+.slider-row { display:flex; align-items:center; gap: .5rem; margin: .75rem 0; }

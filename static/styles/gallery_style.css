@@ -1,0 +1,549 @@
+#bagatelle-container {
+  display: flex;
+  flex-wrap: wrap;            /* Wrap on small screens */
+  align-items: flex-start;
+  gap: 1rem;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* --- Image catalogue (on the right) --- */
+#image-container {
+  flex: 1;                    /* Take up remaining space */
+  display: flex;
+  flex-wrap: wrap;            /* Wrap to new lines */
+  justify-content: flex-start;
+  gap: 8px;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+#bagatelle-selected {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+#selected-image-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-start;
+  max-width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+#selected-image-container img {
+  max-width: 150px;
+  height: auto;
+  border: 2px solid #00bcd4;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+/* --- Ensure everything fits nicely on smaller screens --- */
+@media (max-width: 768px) {
+  #bagatelle-container {
+    flex-direction: column;
+  }
+
+  #settings-container {
+    width: 100%;
+  }
+
+  #image-container {
+    justify-content: center;
+  }
+
+  #selected-image-container img {
+    max-width: 120px;
+  }
+}
+
+
+#thumbnails {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+}
+
+.thumbnail {
+    height: 100px;
+    cursor: pointer;
+    transition: border 0.3s;
+}
+
+.thumbnailCaption {
+    font-size: xx-small;
+}
+
+.thumbnail.selected {
+    border: 3px solid red;
+}
+
+.linkColumn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-top: 0.3em;
+  gap: 0.2em;
+}
+
+.linkColumn a {
+  color: #0066cc;
+  text-decoration: none;
+}
+
+.linkColumn a:hover {
+  text-decoration: underline;
+}
+
+.imageCheckbox{
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    z-index: 10;
+}
+
+figure {
+    display: inline-block;
+    position: relative;
+    text-align: center;
+    border: 1px dotted gray;
+    padding: 4px;
+    margin: 2px;
+}
+
+figure img {
+    vertical-align: center;
+}
+
+.container {
+    display: flex;
+    align-items: center;
+}
+
+.box {
+    flex: 1; /* Distribute space equally */
+    padding: 10px;
+}
+
+@supports (-webkit-appearance: none) or (-moz-appearance: none) {
+    .checkbox-wrapper-14 input[type=checkbox] {
+        --active: #275EFE;
+        --active-inner: #fff;
+        --focus: 2px rgba(39, 94, 254, .3);
+        --border: #BBC1E1;
+        --border-hover: #275EFE;
+        --background: #fff;
+        --disabled: #F6F8FF;
+        --disabled-inner: #E1E6F9;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        height: 20px;
+        outline: none;
+        display: inline-block;
+        vertical-align: top;
+        position: relative;
+        margin: 0;
+        cursor: pointer;
+        border: 1px solid var(--bc, var(--border));
+        background: var(--b, var(--background));
+        transition: background 0.3s, border-color 0.3s, box-shadow 0.2s;
+    }
+
+    .checkbox-wrapper-14 input[type=checkbox]:after {
+        content: "";
+        display: block;
+        left: 0;
+        top: 0;
+        position: absolute;
+        transition: transform var(--d-t, 0.3s) var(--d-t-e, ease), opacity var(--d-o, 0.2s);
+    }
+
+    .checkbox-wrapper-14 input[type=checkbox]:checked {
+        --b: var(--active);
+        --bc: var(--active);
+        --d-o: .3s;
+        --d-t: .6s;
+        --d-t-e: cubic-bezier(.2, .85, .32, 1.2);
+    }
+
+    .checkbox-wrapper-14 input[type=checkbox]:disabled {
+        --b: var(--disabled);
+        cursor: not-allowed;
+        opacity: 0.9;
+    }
+
+    .checkbox-wrapper-14 input[type=checkbox]:disabled:checked {
+        --b: var(--disabled-inner);
+        --bc: var(--border);
+    }
+
+    .checkbox-wrapper-14 input[type=checkbox]:disabled + label {
+        cursor: not-allowed;
+    }
+
+    .checkbox-wrapper-14 input[type=checkbox]:hover:not(:checked):not(:disabled) {
+        --bc: var(--border-hover);
+    }
+
+    .checkbox-wrapper-14 input[type=checkbox]:focus {
+        box-shadow: 0 0 0 var(--focus);
+    }
+
+    .checkbox-wrapper-14 input[type=checkbox]:not(.switch) {
+        width: 21px;
+    }
+
+    .checkbox-wrapper-14 input[type=checkbox]:not(.switch):after {
+        opacity: var(--o, 0);
+    }
+
+    .checkbox-wrapper-14 input[type=checkbox]:not(.switch):checked {
+        --o: 1;
+    }
+
+    .checkbox-wrapper-14 input[type=checkbox] + label {
+        display: inline-block;
+        vertical-align: middle;
+        cursor: pointer;
+        margin-left: 4px;
+        padding: 2px;
+    }
+
+    .checkbox-wrapper-14 input[type=checkbox]:not(.switch) {
+        border-radius: 7px;
+    }
+
+    .checkbox-wrapper-14 input[type=checkbox]:not(.switch):after {
+        width: 5px;
+        height: 9px;
+        border: 2px solid var(--active-inner);
+        border-top: 0;
+        border-left: 0;
+        left: 7px;
+        top: 4px;
+        transform: rotate(var(--r, 20deg));
+    }
+
+    .checkbox-wrapper-14 input[type=checkbox]:not(.switch):checked {
+        --r: 43deg;
+    }
+
+    .checkbox-wrapper-14 input[type=checkbox].switch {
+        width: 38px;
+        border-radius: 11px;
+    }
+
+    .checkbox-wrapper-14 input[type=checkbox].switch:after {
+        left: 2px;
+        top: 2px;
+        border-radius: 50%;
+        width: 17px;
+        height: 17px;
+        background: var(--ab, var(--border));
+        transform: translateX(var(--x, 0));
+    }
+
+    .checkbox-wrapper-14 input[type=checkbox].switch:checked {
+        --ab: var(--active-inner);
+        --x: 17px;
+    }
+
+    .checkbox-wrapper-14 input[type=checkbox].switch:disabled:not(:checked):after {
+        opacity: 0.6;
+    }
+}
+
+.checkbox-wrapper-14 * {
+    box-sizing: inherit;
+}
+
+.checkbox-wrapper-14 *:before,
+.checkbox-wrapper-14 *:after {
+    box-sizing: inherit;
+}
+
+#related-results {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+.related-card {
+    width: 260px;
+    padding: 12px;
+    border: 1px solid #ddd;
+    background: #fff;
+    box-sizing: border-box;
+    vertical-align: top;
+}
+
+.related-card-image {
+    width: 100%;
+    max-height: 190px;
+    object-fit: contain;
+    cursor: pointer;
+    display: block;
+    margin-bottom: 10px;
+}
+
+.related-card-title {
+    font-weight: bold;
+    font-size: 14px;
+    line-height: 1.25;
+    word-break: break-word;
+    margin-bottom: 6px;
+}
+
+.related-card-score {
+    font-size: 12px;
+    color: #555;
+    margin-bottom: 8px;
+}
+
+.related-card-explanation {
+    font-size: 13px;
+    line-height: 1.35;
+    margin: 0 0 8px 0;
+    font-style: italic;
+    color: #333;
+}
+
+.related-card-preview {
+    font-size: 13px;
+    line-height: 1.35;
+    margin: 0 0 8px 0;
+}
+
+.related-card-details {
+    font-size: 13px;
+    line-height: 1.35;
+}
+
+.related-card-details summary {
+    cursor: pointer;
+    color: #0066cc;
+    margin-top: 8px;
+}
+
+.related-card-fulltext {
+    max-height: 260px;
+    overflow-y: auto;
+    padding: 8px;
+    background: #f7f7f7;
+    border: 1px solid #e0e0e0;
+    white-space: pre-wrap;
+}
+
+#graph-view {
+    width: 100%;
+    overflow: auto;
+    border: 1px solid #e0e0e0;
+    background: #fafafa;
+    min-height: 580px;
+}
+
+.graph-canvas {
+    position: relative;
+    min-width: 900px;
+    min-height: 560px;
+}
+
+.graph-edges {
+    position: absolute;
+    left: 0;
+    top: 0;
+    pointer-events: auto;
+    z-index: 1;
+}
+
+.graph-edge {
+    fill: none;
+    stroke: #999;
+    stroke-width: 2;
+    opacity: 0.55;
+    pointer-events: none;
+}
+
+.graph-edge-hitbox {
+    fill: none;
+    stroke: transparent;
+    stroke-width: 18;
+    pointer-events: stroke;
+    cursor: help;
+}
+
+.graph-edge-label-group {
+    pointer-events: none;
+}
+
+.graph-edge-label-bg {
+    fill: white;
+    stroke: #ccc;
+    stroke-width: 1;
+    opacity: 0.9;
+}
+
+.graph-edge-label {
+    font-size: 11px;
+    fill: #444;
+    text-anchor: middle;
+    dominant-baseline: middle;
+}
+
+.graph-node {
+    position: absolute;
+    width: 140px;
+    min-height: 165px;
+    border: 1px solid #ccc;
+    background: white;
+    padding: 6px;
+    cursor: pointer;
+    text-align: center;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+    z-index: 2;
+}
+
+.graph-node:hover {
+    border-color: #333;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    z-index: 5;
+}
+
+.graph-node-root {
+    border: 3px solid #8a5a2b;
+}
+
+.graph-node img {
+    width: 100%;
+    height: 88px;
+    object-fit: contain;
+    display: block;
+    margin-bottom: 6px;
+}
+
+.graph-node span {
+    display: block;
+    font-size: 11px;
+    line-height: 1.2;
+    max-height: 55px;
+    overflow: hidden;
+    word-break: break-word;
+}
+/* --- Category badge on graph nodes --- */
+.graph-node-category {
+    display: block;
+    font-size: 9px;
+    color: #666;
+    background: #f0f0f0;
+    border-radius: 3px;
+    padding: 1px 4px;
+    margin-top: 2px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+/* --- Info button on graph nodes --- */
+.graph-node-info-btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 1px solid #aaa;
+    background: rgba(255,255,255,0.85);
+    color: #555;
+    font-size: 11px;
+    line-height: 1;
+    padding: 0;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s;
+    z-index: 10;
+}
+.graph-node:hover .graph-node-info-btn {
+    opacity: 1;
+}
+.graph-node-info-btn:hover {
+    background: #e0eaff;
+    color: #1a56db;
+    border-color: #1a56db;
+}
+
+/* --- Category tag on related-artwork cards --- */
+.related-card-category {
+    display: inline-block;
+    font-size: 11px;
+    color: #555;
+    background: #eef2ff;
+    border: 1px solid #c7d2fe;
+    border-radius: 4px;
+    padding: 1px 6px;
+    margin-bottom: 4px;
+}
+
+/* --- Goal 5: LLM-confirmed edge colours --- */
+.graph-edge-yes {
+    stroke: #16a34a;
+    stroke-width: 2px;
+    opacity: 0.85;
+}
+
+.graph-edge-maybe {
+    stroke: #d97706;
+    stroke-width: 2px;
+    opacity: 0.75;
+}
+
+/* --- Goal 5: judgement badges on related cards --- */
+.related-card-judgement {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 4px;
+    padding: 2px 7px;
+    margin-top: 3px;
+    margin-bottom: 2px;
+}
+
+.judgement-yes {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #86efac;
+}
+
+.judgement-maybe {
+    background: #fef9c3;
+    color: #92400e;
+    border: 1px solid #fde047;
+}
+
+.judgement-no {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+}
+
+/* Grey out rejected cards */
+.related-card-no {
+    opacity: 0.55;
+}
+
+.related-card-relation-type {
+    display: inline-block;
+    font-size: 10px;
+    font-style: italic;
+    color: #555;
+    margin-left: 5px;
+    vertical-align: middle;
+}
