@@ -10,8 +10,8 @@ openai==2.31.0
 replicate
 qdrant-client==1.17.1
 sentence-transformers==5.4.0
-torch==2.5.1
-torchvision==0.20.1
+torch==2.5.1+cpu
+torchvision==0.20.1+cpu
 transformers==4.47.0
 open-clip-torch==3.3.0
 beautifulsoup4
