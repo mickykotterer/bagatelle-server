@@ -1,8 +1,17 @@
 import re
 import numpy as np
 from api.qdrant_remote_client import get_remote_client
-from sentence_transformers import SentenceTransformer
 from qdrant_client.models import Filter, FieldCondition, MatchValue
+
+# Use fastembed (ONNX-based, ~50MB) instead of sentence-transformers+torch (~350MB).
+# Produces identical 384-dim MiniLM vectors, compatible with existing Qdrant collections.
+try:
+    from fastembed import TextEmbedding as _FastEmbed
+    _USE_FASTEMBED = True
+except ImportError:
+    # Fallback to sentence-transformers if fastembed not installed (local dev)
+    from sentence_transformers import SentenceTransformer as _SentenceTransformer
+    _USE_FASTEMBED = False
 
 # Collections
 TEXT_CLIP_COLLECTION  = "bagatelle_text_CLIP-L14"   # default (GPT-4o descriptions, MiniLM)
@@ -31,38 +40,46 @@ def get_image_collection(image_model: str) -> str:
     """Return the Qdrant collection name for a given image embedding model key."""
     return IMAGE_COLLECTIONS.get(image_model, (IMAGE_CLIP_COLLECTION, 768))[0]
 
-# Embedding models — loaded lazily to avoid startup cost
-# bagatelle_text_CLIP-L14 was built with MiniLM (384-dim)
-# bagatelle_image_CLIP-L14 was built with CLIP-L14 image encoder (768-dim)
+# Embedding models — lazy-loaded
 _minilm_model = None
 _clip_model = None
 
 def _get_minilm_model():
     global _minilm_model
     if _minilm_model is None:
-        _minilm_model = SentenceTransformer("all-MiniLM-L6-v2")
+        if _USE_FASTEMBED:
+            _minilm_model = _FastEmbed(model_name="sentence-transformers/all-MiniLM-L6-v2")
+        else:
+            _minilm_model = _SentenceTransformer("all-MiniLM-L6-v2")
     return _minilm_model
 
 def _get_clip_model():
     global _clip_model
     if _clip_model is None:
         try:
-            _clip_model = SentenceTransformer("clip-ViT-L-14")
+            if _USE_FASTEMBED:
+                raise RuntimeError("CLIP not available via fastembed on this deployment.")
+            _clip_model = _SentenceTransformer("clip-ViT-L-14")
         except Exception as e:
             raise RuntimeError(
-                f"CLIP model could not be loaded (this is expected on low-memory deployments). "
-                f"Image search and query-targeted mode are unavailable. Use text or combined mode. "
-                f"Original error: {e}"
+                f"CLIP model unavailable (expected on low-memory deployments). "
+                f"Use text or combined mode instead. Original error: {e}"
             )
     return _clip_model
 
 def embed_query_minilm(text):
     """384-dim MiniLM embedding — used for bagatelle_text_CLIP-L14."""
-    return _get_minilm_model().encode(text).tolist()
+    model = _get_minilm_model()
+    if _USE_FASTEMBED:
+        return list(model.embed([text]))[0].tolist()
+    return model.encode(text).tolist()
 
 def embed_query_clip(text):
     """768-dim CLIP-L14 text embedding — used for bagatelle_image_CLIP-L14 text queries."""
-    return _get_clip_model().encode(text).tolist()
+    model = _get_clip_model()
+    if _USE_FASTEMBED:
+        raise RuntimeError("CLIP not available on this deployment.")
+    return model.encode(text).tolist()
 
 # Legacy alias
 def embed_query(text):

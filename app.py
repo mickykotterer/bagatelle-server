@@ -49,14 +49,6 @@ def create_app():
 app = create_app()
 toastr = Toastr(app)
 
-# Pre-load MiniLM at startup so it's ready before the first request.
-# Without this, loading it mid-request on a 512MB server causes OOM.
-try:
-    from src.qdrant_bagatelle_store_client import _get_minilm_model
-    _get_minilm_model()
-    logger.info("✅ MiniLM model loaded at startup")
-except Exception as e:
-    logger.warning(f"⚠️ MiniLM preload failed (text search may fail): {e}")
 
 
 def load_bagatelle_file_list():
