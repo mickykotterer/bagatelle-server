@@ -19,9 +19,15 @@ if not (QDRANT_URL and QDRANT_API_KEY):
         "Please set it as an environment variable or in your .env file."
     )
 
+_client = None
+
 def get_remote_client():
-    return QdrantClient(
-        url=QDRANT_URL,
-        api_key=QDRANT_API_KEY,
-        https=True
-)
+    global _client
+    if _client is None:
+        _client = QdrantClient(
+            url=QDRANT_URL,
+            api_key=QDRANT_API_KEY,
+            https=True
+        )
+        logger.info("✅ Qdrant client created (singleton)")
+    return _client
