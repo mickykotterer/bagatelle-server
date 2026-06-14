@@ -49,9 +49,21 @@ def create_app():
 app = create_app()
 toastr = Toastr(app)
 
+# Pre-load embedding model at startup (fastembed ~50MB, fits in 512MB free tier)
+try:
+    from src.qdrant_bagatelle_store_client import _get_minilm_model
+    _get_minilm_model()
+    logger.info("✅ Embedding model loaded at startup")
+except Exception as e:
+    logger.warning(f"⚠️ Embedding model preload failed: {e}")
 
+
+_file_list_cache = None
 
 def load_bagatelle_file_list():
+    global _file_list_cache
+    if _file_list_cache is not None:
+        return _file_list_cache
     file_name = os.path.join('static', 'data', 'file_list_html.csv')
     images = []
     with open(file_name, 'r') as csv_file:
@@ -59,6 +71,7 @@ def load_bagatelle_file_list():
         next(reader, None)
         for row in reader:
             images.append({"name": row[0], "category": row[1], "link": row[2], "title": make_artwork_title(row[0], "")})
+    _file_list_cache = images
     return images
 
 
@@ -88,6 +101,27 @@ Example:
     filtered = [s for s, m in zip(image_paths, answers) if "yes" in m.lower()]
     return filtered
 
+_openai_client = None
+_anthropic_client = None
+
+def _get_openai_client():
+    global _openai_client
+    if _openai_client is None:
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            raise RuntimeError("OPENAI_API_KEY is missing")
+        _openai_client = OpenAI(api_key=api_key)
+    return _openai_client
+
+def _get_anthropic_client():
+    global _anthropic_client
+    if _anthropic_client is None:
+        api_key = os.getenv("ANTHROPIC_API_KEY")
+        if not api_key:
+            raise RuntimeError("ANTHROPIC_API_KEY is missing")
+        _anthropic_client = Anthropic(api_key=api_key)
+    return _anthropic_client
+
 def ask_text_llm(prompt, llm_model=None):
     """
     Simple text-only LLM call for edge explanations.
@@ -95,11 +129,7 @@ def ask_text_llm(prompt, llm_model=None):
     """
 
     if llm_model == "gpt-5":
-        api_key = os.getenv("OPENAI_API_KEY")
-        if not api_key:
-            raise RuntimeError("OPENAI_API_KEY is missing")
-
-        client = OpenAI(api_key=api_key)
+        client = _get_openai_client()
 
         response = client.responses.create(
             model="gpt-5",
@@ -109,11 +139,7 @@ def ask_text_llm(prompt, llm_model=None):
         return response.output_text.strip()
 
     else:
-        api_key = os.getenv("ANTHROPIC_API_KEY")
-        if not api_key:
-            raise RuntimeError("ANTHROPIC_API_KEY is missing")
-
-        client = Anthropic(api_key=api_key)
+        client = _get_anthropic_client()
 
         response = client.messages.create(
             model="claude-sonnet-4-20250514",
@@ -477,10 +503,13 @@ def submit_evaluation():
     if not data:
         return jsonify({"error": "No data received"}), 400
 
+    from datetime import datetime
+    data['server_timestamp'] = datetime.now().isoformat()
+
+    # --- Local file save (works on local dev, ephemeral on Render free tier) ---
     eval_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'evaluations')
     os.makedirs(eval_dir, exist_ok=True)
     results_file = os.path.join(eval_dir, 'results.json')
-
     results = []
     if os.path.exists(results_file):
         try:
@@ -488,15 +517,32 @@ def submit_evaluation():
                 results = json.load(f)
         except Exception:
             results = []
-
-    from datetime import datetime
-    data['server_timestamp'] = datetime.now().isoformat()
     results.append(data)
-
     with open(results_file, 'w') as f:
         json.dump(results, f, indent=2)
 
-    logger.info(f"Evaluation saved. Total entries: {len(results)}")
+    # --- Supabase save (persistent, works on Render) ---
+    supabase_url = os.getenv("SUPABASE_URL")
+    supabase_key = os.getenv("SUPABASE_KEY")
+    if supabase_url and supabase_key:
+        try:
+            import httpx
+            httpx.post(
+                f"{supabase_url}/rest/v1/evaluations",
+                headers={
+                    "apikey": supabase_key,
+                    "Authorization": f"Bearer {supabase_key}",
+                    "Content-Type": "application/json",
+                    "Prefer": "return=minimal"
+                },
+                json={"data": data},
+                timeout=10,
+            )
+            logger.info("✅ Evaluation saved to Supabase")
+        except Exception as e:
+            logger.warning(f"⚠️ Supabase save failed: {e}")
+
+    logger.info(f"Evaluation saved. Total local entries: {len(results)}")
     return jsonify({"success": True, "total_entries": len(results)})
 
 

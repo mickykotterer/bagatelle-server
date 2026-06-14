@@ -199,17 +199,17 @@ def make_artwork_title(image_path, text):
 # ---------------------------------------------------------------------------
 
 def _get_point_by_image_path(client, collection_name, image_path, with_vectors=False):
-    """Scroll to find the first point with matching image_path. Returns the point or None."""
-    matches, _ = client.scroll(
+    """Find the first point with matching image_path. Returns the point or None."""
+    result = client.query_points(
         collection_name=collection_name,
-        scroll_filter=Filter(
+        query_filter=Filter(
             must=[FieldCondition(key="image_path", match=MatchValue(value=image_path))]
         ),
         limit=1,
         with_payload=True,
         with_vectors=with_vectors
     )
-    return matches[0] if matches else None
+    return result.points[0] if result.points else None
 
 
 def _lookup_text_description(client, image_path, text_collection=None):
