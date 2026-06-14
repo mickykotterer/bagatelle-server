@@ -49,13 +49,8 @@ def create_app():
 app = create_app()
 toastr = Toastr(app)
 
-# Pre-load embedding model at startup (fastembed ~50MB, fits in 512MB free tier)
-try:
-    from src.qdrant_bagatelle_store_client import _get_minilm_model
-    _get_minilm_model()
-    logger.info("✅ Embedding model loaded at startup")
-except Exception as e:
-    logger.warning(f"⚠️ Embedding model preload failed: {e}")
+# Embedding model loads lazily on first request to keep startup RAM under 512MB.
+# (onnxruntime + MiniLM ONNX = ~240MB; preloading at boot pushed us over the limit)
 
 
 _file_list_cache = None

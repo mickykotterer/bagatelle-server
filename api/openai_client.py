@@ -8,16 +8,14 @@ logger = logging.getLogger(__name__)
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 if not OPENAI_API_KEY:
-    logger.error("❌ Configuration error: OPENAI_API_KEY not found in environment or .env file.")
-    raise RuntimeError(
-        "Configuration error: OPENAI_API_KEY not found. "
-        "Please set it as an environment variable or in your .env file."
-    )
+    logger.warning("⚠️ OPENAI_API_KEY not set — OpenAI features will be unavailable")
 
-llm_client = OpenAI(api_key=OPENAI_API_KEY)
+llm_client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 
 
 def get_image_description_from_file(image_path, question, model="gpt-5"):
+    if not llm_client:
+        return "OpenAI unavailable: OPENAI_API_KEY not set."
     try:
         # Getting the base64 string
         base64_image = encode_image(image_path)
@@ -42,6 +40,8 @@ def get_image_description_from_file(image_path, question, model="gpt-5"):
 
 
 def ask_openai_llm(question, image_paths, prompt, model="gpt-5"):
+    if not llm_client:
+        return "OpenAI unavailable: OPENAI_API_KEY not set."
     full_paths = get_full_paths(image_paths)
     if not full_paths:
         return "Error: No images could be loaded. Please check the image paths."
@@ -81,6 +81,8 @@ def ask_openai_llm(question, image_paths, prompt, model="gpt-5"):
 
 
 def ask_openai_llm_html(question, html_paths, prompt, model="gpt-5"):
+    if not llm_client:
+        return "OpenAI unavailable: OPENAI_API_KEY not set."
     if not html_paths:
         return "Error: No HTML paths provided."
 
