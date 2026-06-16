@@ -71,30 +71,53 @@ def load_bagatelle_file_list():
 
 
 def refine_response(question, image_paths, llm_model):
-    if not image_paths or len(image_paths) == 0:
+    if not image_paths:
         return image_paths
     if len(image_paths) > 10:
         print("Cannot process more than 10 images!")
         return image_paths
 
-    prompt = f"""
-You are an expert image analyst. Examine each of the following {len(image_paths)} images and determine 
-whether it match the search query. Answer strictly with a JSON array of "Yes" or "No" values, one per image, 
-in the same order as given.
-Example:
-["No", "Yes", "No"]    
-    """
-    if llm_model == "gpt-5":
-        answer = ask_openai_llm(question, image_paths, prompt)
-    else:
-        # Default LLM - claude-sonnet-4-20250514
-        answer = ask_anthropic_llm(question, image_paths, prompt)
+    prompt = f"""You are filtering search results for a medical art collection.
 
-    answers = re.findall(r"\b(?:Image\s*\d+\s*[:\-]?\s*)?(Yes|No)\b", answer, flags=re.IGNORECASE)
-    print("LLM response: ", answer)
-    print("LLM filter:", answers)
-    filtered = [s for s, m in zip(image_paths, answers) if "yes" in m.lower()]
-    return filtered
+The user searched for: "{question}"
+
+Below are {len(image_paths)} artwork images. For each image, decide whether it is relevant to the search query.
+
+Respond with ONLY a JSON array of "yes" or "no" values, one per image, in order.
+Example for 3 images: ["yes", "no", "yes"]
+
+Do not include any other text."""
+
+    try:
+        if llm_model == "gpt-5":
+            answer = ask_openai_llm(question, image_paths, prompt)
+        else:
+            answer = ask_anthropic_llm(question, image_paths, prompt)
+
+        print("LLM response: ", answer)
+
+        # Strip markdown fences if model wraps response
+        answer = answer.strip()
+        if answer.startswith("```"):
+            lines = answer.split("\n")
+            inner = lines[1:-1] if lines[-1].strip() == "```" else lines[1:]
+            answer = "\n".join(inner).strip()
+
+        answers = re.findall(r"\b(yes|no)\b", answer, flags=re.IGNORECASE)
+        print("LLM filter:", answers)
+
+        filtered = [s for s, m in zip(image_paths, answers) if m.lower() == "yes"]
+
+        # Safety net: if LLM filtered everything out, return originals
+        if not filtered:
+            logger.warning("LLM refinement returned 0 results, falling back to unfiltered")
+            return image_paths
+
+        return filtered
+
+    except Exception as e:
+        logger.warning(f"LLM refinement error, returning unfiltered: {e}")
+        return image_paths
 
 _openai_client = None
 _anthropic_client = None
@@ -310,8 +333,11 @@ judgement rules:
 
     try:
         raw = ask_text_llm(prompt, llm_model=llm_model).strip()
-        # Strip markdown fences if the model wraps in ```json
-        raw = raw.strip("`").removeprefix("json").strip()
+        # Strip markdown fences if the model wraps in ```json ... ```
+        if raw.startswith("```"):
+            lines = raw.split("\n")
+            inner = lines[1:-1] if lines[-1].strip() == "```" else lines[1:]
+            raw = "\n".join(inner).strip()
         result = _json.loads(raw)
         judgement = result.get("judgement", "maybe").lower()
         if judgement not in ("yes", "no", "maybe"):
