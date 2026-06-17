@@ -42,14 +42,7 @@
         <label for="k-input" style="display:none;">K</label>
         <input id="k-input" name="k" type="number" min="1" max="10" value="5"
                class="w3-padding" style="width:80px;" required/>
-        <label for="search-mode" style="display:flex; flex-direction:column; font-size:90%; white-space:nowrap;">
-            Search mode
-            <select id="search-mode" style="padding:4px 8px; border:1px solid #ccc; border-radius:4px;">
-                <option value="text">Text</option>
-                <option value="image">Image (visual)</option>
-                <option value="combined">Combined</option>
-            </select>
-        </label>
+        <input type="hidden" id="search-mode" value="text">
         <label for="search-description-source" style="display:flex; flex-direction:column; font-size:90%; white-space:nowrap;">
             Descriptions
             <select id="search-description-source" style="padding:4px 8px; border:1px solid #ccc; border-radius:4px;"
