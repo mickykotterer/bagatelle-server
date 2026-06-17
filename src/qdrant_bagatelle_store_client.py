@@ -3,15 +3,25 @@ import numpy as np
 from api.qdrant_remote_client import get_remote_client
 from qdrant_client.models import Filter, FieldCondition, MatchValue
 
-# Use fastembed (ONNX-based, ~50MB) instead of sentence-transformers+torch (~350MB).
-# Produces identical 384-dim MiniLM vectors, compatible with existing Qdrant collections.
+# Embedding is only needed for text search (/retrieve endpoint).
+# Graph expansion uses pre-stored Qdrant vectors — no model needed at runtime.
+# On Render deployment no embedding package is installed to stay under 512 MB RAM.
+_USE_FASTEMBED = False
+_TEXT_EMBED_AVAILABLE = False
+
 try:
     from fastembed import TextEmbedding as _FastEmbed
     _USE_FASTEMBED = True
+    _TEXT_EMBED_AVAILABLE = True
 except ImportError:
-    # Fallback to sentence-transformers if fastembed not installed (local dev)
-    from sentence_transformers import SentenceTransformer as _SentenceTransformer
-    _USE_FASTEMBED = False
+    pass
+
+if not _TEXT_EMBED_AVAILABLE:
+    try:
+        from sentence_transformers import SentenceTransformer as _SentenceTransformer
+        _TEXT_EMBED_AVAILABLE = True
+    except ImportError:
+        pass  # No embedding model — graph expansion still works; text search will error cleanly
 
 # Collections
 TEXT_CLIP_COLLECTION  = "bagatelle_text_CLIP-L14"   # default (GPT-4o descriptions, MiniLM)
@@ -46,6 +56,11 @@ _clip_model = None
 
 def _get_minilm_model():
     global _minilm_model
+    if not _TEXT_EMBED_AVAILABLE:
+        raise RuntimeError(
+            "Text embedding is not available on this deployment. "
+            "Graph expansion works without a model; text search requires local setup."
+        )
     if _minilm_model is None:
         if _USE_FASTEMBED:
             _minilm_model = _FastEmbed(model_name="sentence-transformers/all-MiniLM-L6-v2")
