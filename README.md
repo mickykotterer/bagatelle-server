@@ -1,95 +1,87 @@
 # Bagatelle — Knowledge Graph Exploration of Art in Medicine
 
-This is a bachelor thesis project at the University of Amsterdam. It extends the original Bagatelle artwork server with a knowledge graph layer that lets users navigate a collection of around 600 art-in-medicine artworks by following semantic connections between them, instead of searching for keywords.
+This is a bachelor thesis project (University of Amsterdam). It extends the original Bagatelle artwork server with a knowledge graph layer: instead of keyword search, users navigate ~600 art-in-medicine artworks by following semantic connections.
 
-**Live demo (thesis version):** https://bagatelle-server-9h94.onrender.com — password: show-demo
-
-**Original Bagatelle server** (with full text search): https://bagatelle-server.onrender.com
-
-**Original GitHub:** https://github.com/mikkonenm/bagatelle-server
+**Original Bagatelle server:** https://github.com/mikkonenm/bagatelle-server
 
 ---
 
-## What this adds over the original
+## Setup
 
-The original Bagatelle server provides artwork search and LLM-generated descriptions. This project adds a knowledge graph exploration layer, five graph generation strategies, LLM-generated explanations for every edge, and a three-panel side-by-side evaluation interface for comparing strategies.
+**Requirements:** Python 3.10+, API keys for Qdrant, Anthropic, and optionally OpenAI.
 
----
+```bash
+git clone https://github.com/mickykotterer/bagatelle-server
+cd bagatelle-server
+python -m venv .venv
+.venv\Scripts\activate          # Windows
+# source .venv/bin/activate     # Mac/Linux
+pip install -r requirements.txt
+```
 
-## How to use the live demo
+Create a `.env` file in the project root:
 
-### Exploring the collection
+```
+BAGATELLE_SECRET_KEY=any-secret-string
+QDRANT_URL=https://your-cluster.qdrant.io
+QDRANT_API_KEY=your-qdrant-key
+ANTHROPIC_API_KEY=your-anthropic-key
+OPENAI_API_KEY=your-openai-key        # optional, for GPT-5 features
+```
 
-1. Go to https://bagatelle-server-9h94.onrender.com and enter the password `show-demo`.
-2. Browse the image catalogue at the bottom of the page and click any artwork to select it.
-3. The Related artworks section shows the three nearest neighbours using the current graph mode.
-4. Click any related artwork to expand — it gets added to the graph as a new node.
-5. Keep clicking to build a graph across the collection. Use the controls above the graph to switch between modes: Text (finds artworks similar by LLM description), Image (finds artworks similar by visual appearance), Combined (blends text and image), or Query-targeted (steers expansion toward a concept you type).
-6. Toggle LLM confirm edges to have Claude validate and explain each connection before it is drawn.
-7. Hover any graph node and click the info button to read the full description without leaving the graph.
+Then run:
 
-Tip: the graph never revisits artworks already in view. Start from an artwork with a clear medical theme (for example Rembrandt's Anatomy Lesson) to see the strategies diverge clearly.
+```bash
+python app.py
+```
 
-### Artwork search
+Open http://localhost:5000 and log in with password `show-demo`.
 
-Full text search is only available on the original Bagatelle server at https://bagatelle-server.onrender.com. The thesis version links there from the gallery page. On the thesis version, use the catalogue to pick a starting artwork directly.
-
-### Evaluation mode
-
-Click Evaluation Mode in the gallery header to open the structured evaluation interface used for the thesis expert study.
-
-In structured mode, the system steps through 16 pre-selected seed artworks. Click Load in both panels to load the same artwork into all three strategy panels simultaneously. In free mode, enter a query to find artworks, pick one from the results, and all three panels load automatically.
-
-Rate which strategy produced more relevant connections, which you would continue exploring, and which had better edge explanations. Click any edge in a graph to rate whether that specific connection is meaningful. Submit saves your ratings and auto-downloads a JSON backup.
-
----
-
-## What works on the live Render deployment
-
-Graph expansion (text, image, combined, query-targeted modes) works fully on Render because it uses pre-stored vectors in Qdrant — no embedding model is needed at runtime. LLM edge explanations and the full evaluation interface also work. Full text search is not available on the Render free tier due to memory limits; use the original server for that.
+**Note:** The CLIP image model (~800 MB) downloads automatically on first use and is cached after that.
 
 ---
 
-## Running locally
+## What's in the app
 
-Install dependencies with `pip install -r requirements.txt`. Create a `.env` file with the following variables: `BAGATELLE_SECRET_KEY` (any string), `QDRANT_URL`, `QDRANT_API_KEY`, `OPENAI_API_KEY` (optional, for GPT-5), and `ANTHROPIC_API_KEY` (for Claude edge explanations). Then run `python app.py` and open http://localhost:5000 with password show-demo.
+**[A.] Search for images** — enter a text query to find artworks by description (text), visual appearance (image), or both (combined). Optional LLM refinement filters results that don't match the query.
 
-All graph modes work locally. The CLIP image model (around 800 MB) downloads on first use and is cached automatically.
+**Graph exploration** — click any artwork to build a semantic graph. Four modes:
+
+- **Text** — nearest neighbours by MiniLM embedding of LLM-generated descriptions. Best for medical theme, diagnosis, historical context.
+- **Image** — nearest neighbours by CLIP visual embedding. Best for visual style, medium, composition.
+- **Combined** — blends text + image scores with a configurable weight slider.
+- **Query-targeted** — steers expansion toward a concept you type (e.g. "surgery as public spectacle").
+
+Toggle **LLM confirm edges** to have Claude validate each connection and write a short explanation before the edge is drawn.
+
+Hover any graph node and click ℹ to read the full LLM description without leaving the graph.
+
+**[B.] Workshop generator** — select artworks from the catalogue, set a theme and audience, and generate a full multi-day workshop programme as HTML.
+
+**Evaluation mode** (/eval) — side-by-side three-panel interface (text / image / combined) used for the thesis expert study. Rate strategy preference, click edges to rate individual connections, submit results to `evaluations/results.json`.
 
 ---
 
-## Graph strategies
+## Qdrant collections needed
 
-**Text** finds artworks similar by MiniLM embedding of the LLM-generated description. Best for connections by medical theme, diagnosis, or historical context.
+| Purpose | Collection name | Model |
+|---|---|---|
+| Text search (default) | `bagatelle_text_CLIP-L14` | MiniLM 384-dim |
+| Text search (Claude) | `bagatelle_text_claude` | MiniLM 384-dim |
+| Text search (GPT-5) | `bagatelle_text_gpt5` | MiniLM 384-dim |
+| Image search | `bagatelle_image_CLIP-L14` | CLIP ViT-L/14 768-dim |
+| Image search (OpenCLIP) | `bagatelle_image_openclip` | OpenCLIP ViT-L-14 768-dim |
+| Image search (SigLIP 2) | `bagatelle_image_siglip2` | SigLIP 2 so400m 1152-dim |
 
-**Image** finds artworks similar by CLIP visual embedding. Best for connections by visual style, medium, or composition.
-
-**Combined** merges text and image scores with configurable weights. Promotes artworks that score well on both dimensions simultaneously.
-
-**Query-targeted** blends the artwork vector with a typed query vector. Use this to steer exploration toward a specific concept such as "surgery as public spectacle".
-
-**LLM-confirmed** layers on top of any mode. Claude validates each proposed edge and returns a yes/maybe/no judgement plus a short written explanation. Edges rated no are shown but not added to the graph.
+To build collections: `python build_text_collection.py --model gpt4o|claude|gpt5|legacy` and `python build_image_collection.py --model clip|openclip|siglip2`. Run `python create_qdrant_indexes.py` after building each collection.
 
 ---
 
 ## Key files
 
-`app.py` — Flask routes for /gallery, /related, /eval, and /submit_evaluation.
-
-`src/qdrant_bagatelle_store_client.py` — all retrieval logic and graph generation strategies.
-
-`templates/gallery.html` and `static/js/gallery.js` — the main exploration interface.
-
-`templates/eval.html` — the three-panel evaluation interface.
-
-`static/data/file_list_html.csv` — the artwork catalogue.
-
-`requirements.txt` is for local development (includes torch and sentence-transformers). `requirements-deploy.txt` is for Render (fastembed only, around 150 MB total).
-
-`mass_test.py` runs the automated quantitative evaluation: 16 seed artworks across 3 modes for N expansion hops.
-
----
-
-## Acknowledgements
-
-Built on top of the original Bagatelle server by M. Mikkonen et al. at Amsterdam UMC / University of Amsterdam.
+- `app.py` — Flask routes
+- `src/qdrant_bagatelle_store_client.py` — all retrieval and graph logic
+- `templates/gallery.html` + `static/js/gallery.js` — main exploration UI
+- `templates/eval.html` — three-panel evaluation interface
+- `static/data/file_list_html.csv` — artwork catalogue
+- `mass_test.py` — automated quantitative evaluation (16 seeds × 3 modes × N hops)
