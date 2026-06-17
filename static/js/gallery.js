@@ -1251,11 +1251,11 @@ let activeSearchQuery = "";
 let graphExpansionCount = 0;
 const graphModesUsed = new Set();
 
-document.getElementById('llm-checkbox').addEventListener('change', updateLlmRadios);
-document.getElementById("update-button").addEventListener("click", updateImages);
-document.getElementById('retrieve-form').addEventListener('submit', submitSearchRequest);
-document.getElementById('slider').addEventListener('input', sliderControl);
-document.getElementById('workshop-form').addEventListener('submit', submitWorkshopForm);
+document.getElementById('llm-checkbox')?.addEventListener('change', updateLlmRadios);
+document.getElementById("update-button")?.addEventListener("click", updateImages);
+document.getElementById('retrieve-form')?.addEventListener('submit', submitSearchRequest);
+document.getElementById('slider')?.addEventListener('input', sliderControl);
+document.getElementById('workshop-form')?.addEventListener('submit', submitWorkshopForm);
 document.getElementById('selected-clear').onclick = clearSelected;
 document.getElementById('graph-clear').addEventListener('click', clearGraph);
 
