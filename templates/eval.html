@@ -85,7 +85,8 @@
             background: #eaf0fb; padding: 6px 12px; font-weight: 700;
             font-size: 0.9rem; border-bottom: 1px solid #ccd6e8; display: flex; align-items: center; gap: 8px;
         }
-        .panel-label.right-label { background: #fef9f0; border-color: #f0ddb0; }
+        .panel-label.image-label    { background: #fef9f0; border-color: #f0ddb0; }
+        .panel-label.combined-label { background: #f0fbf0; border-color: #b0d8b0; }
         .panel-controls {
             padding: 6px 10px; background: #fafafa; border-bottom: 1px solid #eee;
             display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
@@ -352,94 +353,100 @@
         <div id="free-results-row" style="width:100%; display:flex; gap:6px; flex-wrap:wrap; padding-top:4px;"></div>
     </div>
 
-    <!-- ── Two-panel comparison ───────────────────────── -->
+    <!-- ── Three-panel comparison ──────────────────────── -->
     <div id="panels-row">
 
-        <!-- LEFT panel -->
-        <div class="eval-panel" id="panel-left-wrap">
+        <!-- TEXT panel -->
+        <div class="eval-panel" id="panel-text-wrap">
             <div class="panel-label">
-                🅐 Strategy Left
+                🅐 Text strategy
             </div>
             <div class="panel-controls">
-                <label>Mode:</label>
-                <select id="mode-left" onchange="onModeChange('left')">
-                    <option value="text_clip">Text</option>
-                    <option value="image_clip">Image</option>
-                    <option value="combined_clip">Combined</option>
-                    <option value="query_targeted">Query-targeted</option>
-                </select>
                 <label>Desc:</label>
-                <select id="desc-left">
+                <select id="desc-text">
                     <option value="legacy">GPT-4o</option>
                     <option value="claude">Claude</option>
                     <option value="gpt5">GPT-5</option>
                 </select>
-                <input type="text" id="query-left" placeholder="Query…"
-                       style="display:none; width:130px;" title="Query for query-targeted mode"/>
-                <button class="panel-clear-btn" onclick="panels.left.clear()">Clear</button>
+                <button class="panel-clear-btn" onclick="panels.text.clear()">Clear</button>
             </div>
-            <div class="panel-graph" id="graph-left">
+            <div class="panel-graph" id="graph-text">
                 <p class="panel-placeholder">Load an artwork to start.</p>
             </div>
-            <div class="panel-status" id="status-left"></div>
-            <div class="panel-stats" id="stats-left"></div>
+            <div class="panel-status" id="status-text"></div>
+            <div class="panel-stats" id="stats-text"></div>
         </div>
 
-        <!-- RIGHT panel -->
-        <div class="eval-panel" id="panel-right-wrap">
-            <div class="panel-label right-label">
-                🅑 Strategy Right
+        <!-- IMAGE panel -->
+        <div class="eval-panel" id="panel-image-wrap">
+            <div class="panel-label image-label">
+                🅑 Image strategy
             </div>
             <div class="panel-controls">
-                <label>Mode:</label>
-                <select id="mode-right" onchange="onModeChange('right')" >
-                    <option value="text_clip">Text</option>
-                    <option value="image_clip" selected>Image</option>
-                    <option value="combined_clip">Combined</option>
-                    <option value="query_targeted">Query-targeted</option>
+                <label>Model:</label>
+                <select id="imgmodel-image">
+                    <option value="clip">CLIP-L14</option>
+                    <option value="openclip">OpenCLIP</option>
+                    <option value="siglip2">SigLIP 2</option>
                 </select>
+                <button class="panel-clear-btn" onclick="panels.image.clear()">Clear</button>
+            </div>
+            <div class="panel-graph" id="graph-image">
+                <p class="panel-placeholder">Load an artwork to start.</p>
+            </div>
+            <div class="panel-status" id="status-image"></div>
+            <div class="panel-stats" id="stats-image"></div>
+        </div>
+
+        <!-- COMBINED panel -->
+        <div class="eval-panel" id="panel-combined-wrap">
+            <div class="panel-label combined-label">
+                🅒 Combined strategy
+            </div>
+            <div class="panel-controls">
                 <label>Desc:</label>
-                <select id="desc-right">
+                <select id="desc-combined">
                     <option value="legacy">GPT-4o</option>
                     <option value="claude">Claude</option>
                     <option value="gpt5">GPT-5</option>
                 </select>
-                <input type="text" id="query-right" placeholder="Query…"
-                       style="display:none; width:130px;" title="Query for query-targeted mode"/>
-                <button class="panel-clear-btn" onclick="panels.right.clear()">Clear</button>
+                <button class="panel-clear-btn" onclick="panels.combined.clear()">Clear</button>
             </div>
-            <div class="panel-graph" id="graph-right">
+            <div class="panel-graph" id="graph-combined">
                 <p class="panel-placeholder">Load an artwork to start.</p>
             </div>
-            <div class="panel-status" id="status-right"></div>
-            <div class="panel-stats" id="stats-right"></div>
+            <div class="panel-status" id="status-combined"></div>
+            <div class="panel-stats" id="stats-combined"></div>
         </div>
     </div>
 
     <!-- ── Rating panel ─────────────────────────────────── -->
     <div id="rating-bar">
         <div class="rating-row">
-            <span class="rating-label">1. More relevant connections?</span>
+            <span class="rating-label">1. Most relevant connections?</span>
             <div class="rating-options" id="opts-relevance">
-                <label onclick="chooseRating(this,'relevance','left')"><input type="radio" name="q-relevance" value="left"/><span>🅐 Left</span></label>
-                <label onclick="chooseRating(this,'relevance','tie')"><input type="radio" name="q-relevance" value="tie"/><span>Tie</span></label>
-                <label onclick="chooseRating(this,'relevance','right')"><input type="radio" name="q-relevance" value="right"/><span>🅑 Right</span></label>
+                <label onclick="chooseRating(this,'relevance','text')"><input type="radio" name="q-relevance" value="text"/><span>🅐 Text</span></label>
+                <label onclick="chooseRating(this,'relevance','image')"><input type="radio" name="q-relevance" value="image"/><span>🅑 Image</span></label>
+                <label onclick="chooseRating(this,'relevance','combined')"><input type="radio" name="q-relevance" value="combined"/><span>🅒 Combined</span></label>
+                <label onclick="chooseRating(this,'relevance','equal')"><input type="radio" name="q-relevance" value="equal"/><span>Equal</span></label>
             </div>
         </div>
         <div class="rating-row">
-            <span class="rating-label">2. Which side would you continue exploring?</span>
+            <span class="rating-label">2. Which would you continue exploring?</span>
             <div class="rating-options" id="opts-exploration">
-                <label onclick="chooseRating(this,'exploration','left')"><input type="radio" name="q-exploration" value="left"/><span>🅐 Left</span></label>
-                <label onclick="chooseRating(this,'exploration','tie')"><input type="radio" name="q-exploration" value="tie"/><span>Tie</span></label>
-                <label onclick="chooseRating(this,'exploration','right')"><input type="radio" name="q-exploration" value="right"/><span>🅑 Right</span></label>
+                <label onclick="chooseRating(this,'exploration','text')"><input type="radio" name="q-exploration" value="text"/><span>🅐 Text</span></label>
+                <label onclick="chooseRating(this,'exploration','image')"><input type="radio" name="q-exploration" value="image"/><span>🅑 Image</span></label>
+                <label onclick="chooseRating(this,'exploration','combined')"><input type="radio" name="q-exploration" value="combined"/><span>🅒 Combined</span></label>
+                <label onclick="chooseRating(this,'exploration','equal')"><input type="radio" name="q-exploration" value="equal"/><span>Equal</span></label>
             </div>
         </div>
         <div class="rating-row">
-            <span class="rating-label">3. Better edge explanations?</span>
+            <span class="rating-label">3. Best edge explanations?</span>
             <div class="rating-options" id="opts-explanations">
-                <label onclick="chooseRating(this,'explanations','left')"><input type="radio" name="q-explanations" value="left"/><span>🅐 Left</span></label>
-                <label onclick="chooseRating(this,'explanations','tie')"><input type="radio" name="q-explanations" value="tie"/><span>Tie</span></label>
-                <label onclick="chooseRating(this,'explanations','right')"><input type="radio" name="q-explanations" value="right"/><span>🅑 Right</span></label>
+                <label onclick="chooseRating(this,'explanations','text')"><input type="radio" name="q-explanations" value="text"/><span>🅐 Text</span></label>
+                <label onclick="chooseRating(this,'explanations','image')"><input type="radio" name="q-explanations" value="image"/><span>🅑 Image</span></label>
+                <label onclick="chooseRating(this,'explanations','combined')"><input type="radio" name="q-explanations" value="combined"/><span>🅒 Combined</span></label>
+                <label onclick="chooseRating(this,'explanations','equal')"><input type="radio" name="q-explanations" value="equal"/><span>Equal</span></label>
             </div>
         </div>
         <div class="rating-actions">
@@ -535,8 +542,9 @@ let pendingEdge = null;   // { edge, panelId }
 //  GRAPH PANEL CLASS
 // ════════════════════════════════════════════════════════
 class GraphPanel {
-    constructor(panelId) {
-        this.panelId = panelId;
+    constructor(panelId, fixedMode) {
+        this.panelId   = panelId;
+        this.fixedMode = fixedMode;   // e.g. 'text_clip', 'image_clip', 'combined_clip'
         this.nodes = new Map();
         this.edges = new Map();
         this.root = null;
@@ -544,9 +552,9 @@ class GraphPanel {
         this.modesUsed = new Set();
     }
 
-    get mode()       { return document.getElementById(`mode-${this.panelId}`)?.value || 'text_clip'; }
+    get mode()       { return this.fixedMode; }
     get descSource() { return document.getElementById(`desc-${this.panelId}`)?.value || 'legacy'; }
-    get query()      { const v = document.getElementById(`query-${this.panelId}`)?.value?.trim(); return v || null; }
+    get imageModel() { return document.getElementById(`imgmodel-${this.panelId}`)?.value || 'clip'; }
     get statusEl()   { return document.getElementById(`status-${this.panelId}`); }
     get statsEl()    { return document.getElementById(`stats-${this.panelId}`); }
     get container()  { return document.getElementById(`graph-${this.panelId}`); }
@@ -556,24 +564,16 @@ class GraphPanel {
     }
 
     async fetchRelated(imagePath, excludePaths = []) {
-        const mode = this.mode;
-        const effectiveMode = (mode === 'query_targeted' || this.query) ? 'query_targeted' : mode;
-
         const body = {
             image_path: imagePath,
             k: 3,
             exclude_paths: excludePaths,
-            mode: effectiveMode,
+            mode: this.fixedMode,
             description_source: this.descSource,
-            image_model: 'clip',
+            image_model: this.imageModel,
             text_weight: 0.5,
             image_weight: 0.5,
-            query_weight: 0.4,
         };
-
-        if (effectiveMode === 'query_targeted' && this.query) {
-            body.query = this.query;
-        }
 
         if (this.statusEl) this.statusEl.textContent = '⏳ Loading…';
 
@@ -876,8 +876,9 @@ function getFileName(path) {
 //  PANEL INSTANCES
 // ════════════════════════════════════════════════════════
 const panels = {
-    left:  new GraphPanel('left'),
-    right: new GraphPanel('right'),
+    text:     new GraphPanel('text',     'text_clip'),
+    image:    new GraphPanel('image',    'image_clip'),
+    combined: new GraphPanel('combined', 'combined_clip'),
 };
 
 // ════════════════════════════════════════════════════════
@@ -900,12 +901,6 @@ function startEval() {
 
     if (evalMode === 'structured') {
         document.getElementById('task-bar').style.display = 'flex';
-        // Remove query-targeted option — no query input in structured mode
-        ['mode-left', 'mode-right'].forEach(id => {
-            const sel = document.getElementById(id);
-            const opt = sel.querySelector('option[value="query_targeted"]');
-            if (opt) opt.remove();
-        });
         loadTask(0);
     } else {
         document.getElementById('free-bar').style.display = 'flex';
@@ -942,22 +937,24 @@ async function loadBothPanels() {
     const seed = SEED_ARTWORKS[taskIndex];
     const imagePath = `static/data/images/${seed.filename}`;
 
-    document.getElementById('task-status').textContent = '⏳ Loading both panels…';
+    document.getElementById('task-status').textContent = '⏳ Loading all three panels…';
 
-    panels.left.clear();
-    panels.right.clear();
+    Object.values(panels).forEach(p => p.clear());
 
-    // Fetch both in parallel
-    const [dataL, dataR] = await Promise.all([
-        panels.left.fetchRelated(imagePath, []),
-        panels.right.fetchRelated(imagePath, []),
+    const [dataT, dataI, dataC] = await Promise.all([
+        panels.text.fetchRelated(imagePath, []),
+        panels.image.fetchRelated(imagePath, []),
+        panels.combined.fetchRelated(imagePath, []),
     ]);
 
-    if (dataL) panels.left.addExpansion(dataL.selected.image_path, dataL.related, dataL.selected);
-    if (dataR) panels.right.addExpansion(dataR.selected.image_path, dataR.related, dataR.selected);
+    if (dataT) panels.text.addExpansion(dataT.selected.image_path, dataT.related, dataT.selected);
+    if (dataI) panels.image.addExpansion(dataI.selected.image_path, dataI.related, dataI.selected);
+    if (dataC) panels.combined.addExpansion(dataC.selected.image_path, dataC.related, dataC.selected);
 
+    const loaded = [dataT, dataI, dataC].filter(Boolean).length;
     document.getElementById('task-status').textContent =
-        dataL && dataR ? '✓ Both panels loaded. Explore and rate below.' : 'Some panels failed to load.';
+        loaded === 3 ? '✓ All three panels loaded. Explore and rate below.'
+                     : `${loaded}/3 panels loaded.`;
 }
 
 // ════════════════════════════════════════════════════════
@@ -982,7 +979,7 @@ async function freeSearch() {
         const data = await resp.json();
         const paths = data.response || [];
 
-        statusEl.textContent = paths.length ? `${paths.length} results. Click one to load in both panels.` : 'No results.';
+        statusEl.textContent = paths.length ? `${paths.length} results. Click one to load in all three panels.` : 'No results.';
 
         paths.forEach(p => {
             const img = document.createElement('img');
@@ -1025,30 +1022,21 @@ async function confirmFreeSelect() {
 }
 
 async function loadFreeArtwork(imagePath) {
-    // Highlight selection
     document.querySelectorAll('.free-thumb').forEach(t => t.classList.remove('selected'));
     const selected = document.querySelector(`.free-thumb[src="/${imagePath}"]`);
     if (selected) selected.classList.add('selected');
 
-    panels.left.clear();
-    panels.right.clear();
+    Object.values(panels).forEach(p => p.clear());
 
-    const [dataL, dataR] = await Promise.all([
-        panels.left.fetchRelated(imagePath, []),
-        panels.right.fetchRelated(imagePath, []),
+    const [dataT, dataI, dataC] = await Promise.all([
+        panels.text.fetchRelated(imagePath, []),
+        panels.image.fetchRelated(imagePath, []),
+        panels.combined.fetchRelated(imagePath, []),
     ]);
 
-    if (dataL) panels.left.addExpansion(dataL.selected.image_path, dataL.related, dataL.selected);
-    if (dataR) panels.right.addExpansion(dataR.selected.image_path, dataR.related, dataR.selected);
-}
-
-// ════════════════════════════════════════════════════════
-//  MODE CHANGE (show/hide query field)
-// ════════════════════════════════════════════════════════
-function onModeChange(panelId) {
-    const mode = document.getElementById(`mode-${panelId}`).value;
-    const queryEl = document.getElementById(`query-${panelId}`);
-    if (queryEl) queryEl.style.display = mode === 'query_targeted' ? 'inline-block' : 'none';
+    if (dataT) panels.text.addExpansion(dataT.selected.image_path, dataT.related, dataT.selected);
+    if (dataI) panels.image.addExpansion(dataI.selected.image_path, dataI.related, dataI.selected);
+    if (dataC) panels.combined.addExpansion(dataC.selected.image_path, dataC.related, dataC.selected);
 }
 
 // ════════════════════════════════════════════════════════
@@ -1063,7 +1051,8 @@ function openEdgeRatingPopup(edge, panel, clientX, clientY) {
 
     document.getElementById('edge-popup-title').textContent =
         `Rate: ${panel.nodes.get(edge.source)?.label || srcName} → ${panel.nodes.get(edge.target)?.label || tgtName}`;
-    document.getElementById('edge-popup-score').textContent = `Similarity score: ${Number(edge.score||0).toFixed(3)}  |  Panel: ${panel.panelId === 'left' ? '🅐 Left' : '🅑 Right'}`;
+    const panelLabel = { text: '🅐 Text', image: '🅑 Image', combined: '🅒 Combined' }[panel.panelId] || panel.panelId;
+    document.getElementById('edge-popup-score').textContent = `Similarity score: ${Number(edge.score||0).toFixed(3)}  |  Panel: ${panelLabel}`;
     document.getElementById('edge-popup-expl').textContent = edge.explanation || '(no explanation available)';
 
     popup.removeAttribute('hidden');
@@ -1138,18 +1127,22 @@ async function submitRating() {
         timestamp: new Date().toISOString(),
         task_index: evalMode === 'structured' ? taskIndex : null,
         artwork: evalMode === 'structured' ? SEED_ARTWORKS[taskIndex] : null,
-        left_strategy: { mode: panels.left.mode, description_source: panels.left.descSource },
-        right_strategy: { mode: panels.right.mode, description_source: panels.right.descSource },
+        strategies: {
+            text:     { mode: 'text_clip',     description_source: panels.text.descSource },
+            image:    { mode: 'image_clip',     image_model: panels.image.imageModel },
+            combined: { mode: 'combined_clip',  description_source: panels.combined.descSource },
+        },
         ratings: {
             relevance:    currentRatings.relevance,
             exploration:  currentRatings.exploration,
             explanations: currentRatings.explanations,
             comments:     document.getElementById('comments-input').value.trim(),
         },
-        edge_ratings: evalState.edgeRatings.filter(r => true), // all so far
+        edge_ratings: evalState.edgeRatings,
         graph_stats: {
-            left:  panels.left.getStatsData(),
-            right: panels.right.getStatsData(),
+            text:     panels.text.getStatsData(),
+            image:    panels.image.getStatsData(),
+            combined: panels.combined.getStatsData(),
         },
     };
 
@@ -1174,6 +1167,9 @@ async function submitRating() {
     document.querySelectorAll('.rating-options label').forEach(l => l.classList.remove('chosen'));
     document.querySelectorAll('.rating-options input[type=radio]').forEach(r => r.checked = false);
     document.getElementById('comments-input').value = '';
+
+    // Auto-download after every submit — server disk is ephemeral on Render free tier
+    downloadResults();
 
     // In structured mode, advance to next task automatically
     if (evalMode === 'structured' && taskIndex < SEED_ARTWORKS.length - 1) {

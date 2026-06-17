@@ -10,8 +10,8 @@ from src.qdrant_bagatelle_store_client import (
     get_related_artworks,
     make_artwork_title
 )
-from api.openai_client import ask_openai_llm, ask_openai_llm_html
-from api.anthropic_client import ask_anthropic_llm, ask_anthropic_llm_html
+from api.openai_client import ask_openai_llm
+from api.anthropic_client import ask_anthropic_llm
 import os
 import logging
 from dotenv import load_dotenv
@@ -438,76 +438,6 @@ def related():
             "related": [],
             "error": str(e)
         }), 500
-
-@app.route('/test_related')
-def test_related():
-    image_path = "static/data/images/50ThomasEakinsTheAgnewClinic1889Surgerypg201.jpg"
-
-    related_paths = get_related_artworks(image_path, 3)
-
-    return jsonify({
-        "selected": image_path,
-        "related": related_paths
-    })
-
-@app.route('/generate_program', methods=['POST'])
-def generate_program():
-    if not session.get("logged_in"):
-        return jsonify({"error": "Not logged in"}), 401
-
-    data = request.get_json(silent=True)
-    if not data:
-        return jsonify({"error": "No JSON payload received"}), 400
-
-    print("Workshop parameters:", data)
-    num_days = data.get("num_days", 3)
-    theme = data.get("theme", "")
-    audience = data.get("audience", "")
-    context = data.get("context")
-    llm_model = data.get("llm")
-    context_type = data.get("context_type")
-
-    if not theme or not audience:
-        return jsonify({"error": "Missing theme or audience"}), 400
-
-    try:
-        logger.info("Generating program...")
-        context_paths = context.strip().splitlines()
-        # Build the instruction prompt
-        prompt_template = """
-Using only the selected set of artworks as educational and illustrative material, create a nicely formatted 500-word programme 
-for {NUM_DAYS}-day workshop on art in medicine with the theme “{THEME}” aimed at {AUDIENCE}. 
-"""
-        prompt = prompt_template.format(NUM_DAYS=num_days, THEME=theme, AUDIENCE=audience)
-        print("Parameterized prompt:", prompt, "...")
-        prompt += """
-The cross-cutting topics discussed in this workshop should prioritize commonalities between the artists who created these 
-works as well as the overlap in medical/historical/artistic aspects of their artifacts. Before you describe the workshop 
-programme in any detail, first provide a 100-word introduction that explains why the chosen theme of the art-in-medicine 
-workshop is relevant to the type of audience the workshop is aimed at, and why the selected artworks provide very apt 
-and fitting case-studies for the theme of the workshop. Create a programme that is focused on the chosen theme, in the 
-style of an academic syllabus, introducing each day with a short overview and set of learning objectives, and specifying 
-the educational goals for each session and the artworks and corresponding topics that are explored. Please make sure that 
-each workshop day has sessions covering the typical 9am-to-5pm span (with appropriate breaks for coffee, lunch etc) - 
-also propose break-out sessions for small-group discussions that combine the chosen artworks and workshop theme. 
-In the programme, mention the artworks by name and explicitly point out in which sessions they will 
-be discussed and why. Provide response in HTML format. Do not refer to instructions or ask questions in response.
-""".strip()
-        content = prompt
-        if context_type == "images":
-            if llm_model == "gpt-5":
-                llm_resp = ask_openai_llm("", context_paths, prompt)
-            else:
-                llm_resp = ask_anthropic_llm("", context_paths, prompt)
-        else:
-            if llm_model == "gpt-5":
-                llm_resp = ask_openai_llm_html("", context_paths, prompt)
-            else:
-                llm_resp = ask_anthropic_llm_html("", context_paths, prompt)
-        return jsonify({"response": llm_resp, "content": content})
-    except Exception as e:
-        print(e)
-        return jsonify({"error": "Model failed to run!", "details": str(e)}), 500
 
 
 @app.route('/eval')
