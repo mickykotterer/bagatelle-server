@@ -5,23 +5,32 @@ from qdrant_client.models import Filter, FieldCondition, MatchValue
 
 # Embedding is only needed for text search (/retrieve endpoint).
 # Graph expansion uses pre-stored Qdrant vectors — no model needed at runtime.
-# On Render deployment no embedding package is installed to stay under 512 MB RAM.
-_USE_FASTEMBED = False
-_TEXT_EMBED_AVAILABLE = False
+# Imports are intentionally lazy (inside _get_minilm_model) so that onnxruntime
+# (~150 MB) is not loaded at startup — this keeps Render's 512 MB free tier stable.
+_USE_FASTEMBED = None   # None = not yet detected
+_FastEmbed = None
+_SentenceTransformer = None
 
-try:
-    from fastembed import TextEmbedding as _FastEmbed
-    _USE_FASTEMBED = True
-    _TEXT_EMBED_AVAILABLE = True
-except ImportError:
-    pass
-
-if not _TEXT_EMBED_AVAILABLE:
+def _detect_embed_backend():
+    """Lazy-detect which embedding backend is available. Called only when text search runs."""
+    global _USE_FASTEMBED, _FastEmbed, _SentenceTransformer
+    if _USE_FASTEMBED is not None:
+        return  # already detected
     try:
-        from sentence_transformers import SentenceTransformer as _SentenceTransformer
-        _TEXT_EMBED_AVAILABLE = True
+        from fastembed import TextEmbedding as _FE
+        _FastEmbed = _FE
+        _USE_FASTEMBED = True
+        return
     except ImportError:
-        pass  # No embedding model — graph expansion still works; text search will error cleanly
+        pass
+    try:
+        from sentence_transformers import SentenceTransformer as _ST
+        _SentenceTransformer = _ST
+        _USE_FASTEMBED = False
+        return
+    except ImportError:
+        pass
+    _USE_FASTEMBED = False  # nothing available
 
 # Collections
 TEXT_CLIP_COLLECTION  = "bagatelle_text_CLIP-L14"   # default (GPT-4o descriptions, MiniLM)
@@ -56,7 +65,8 @@ _clip_model = None
 
 def _get_minilm_model():
     global _minilm_model
-    if not _TEXT_EMBED_AVAILABLE:
+    _detect_embed_backend()
+    if _FastEmbed is None and _SentenceTransformer is None:
         raise RuntimeError(
             "Text embedding is not available on this deployment. "
             "Graph expansion works without a model; text search requires local setup."
@@ -70,6 +80,7 @@ def _get_minilm_model():
 
 def _get_clip_model():
     global _clip_model
+    _detect_embed_backend()
     if _clip_model is None:
         try:
             if _USE_FASTEMBED:
