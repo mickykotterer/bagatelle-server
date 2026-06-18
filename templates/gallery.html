@@ -172,62 +172,6 @@
     </div>
 </section>
 
-<!-- Workshop generator -->
-<section id="workshop-section" class="w3-container w3-border w3-padding w3-margin">
-    <h3>[B.] Create a workshop programme from selected images</h3>
-    <form id="workshop-form" action="/generate_program" method="POST"
-          style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-        <label for="llm-selector" style="display:flex; flex-direction:column; font-size:90%;">LLM
-            <div class="radio-selector w3-border w3-padding">
-                <label>
-                    <input type="radio" name="llm_model" value="claude-sonnet-4" checked>
-                    claude-sonnet-4
-                </label>
-                <label>
-                    <input type="radio" name="llm_model" value="gpt-5">
-                    gpt-5
-                </label>
-            </div>
-        </label>
-
-        <label for="num-days" style="display:flex; flex-direction:column; font-size:90%;">
-            Num days
-            <input id="num-days" name="num_days" type="number" min="1" max="14" value="3"
-                   class="w3-padding" style="width:80px;">
-        </label>
-
-        <label for="theme" style="display:flex; flex-direction:column; font-size:90%; flex:1;">
-            Theme of workshop
-            <input id="theme" name="theme" type="text" placeholder="e.g. Taking Flight"  class="w3-padding">
-        </label>
-
-        <label for="audience" style="display:flex; flex-direction:column; font-size:90%; flex:1;">
-            Type of audience
-            <input id="audience" name="audience" type="text" placeholder="e.g. pathology residents"
-                    class="w3-padding">
-        </label>
-
-        <button type="submit" id="workshop-submit" class="w3-padding" style="margin-top:16px;">Generate programme</button>
-    </form>
-
-    <div id="workshop-status" style="margin-top:8px; color:#666; font-size:90%;"></div>
-    <div id="workshop-result" style="margin-top:12px;">
-        <!-- Toolbar: hidden when no content -->
-        <div id="workshop-result-toolbar" class="w3-light-grey w3-small" style="display:none; width:100%; overflow-x:auto;
-            white-space:nowrap; gap:8px; margin-bottom:8px;">
-            <button id="workshop-download" class="w3-button w3-padding">Download as HTML</button>
-            <button id="workshop-clear" class="w3-button w3-padding">Clear</button>
-        </div>
-        <!-- Formatted result area -->
-        <div id="workshop-result-content"
-             style="padding:16px; border:1px solid #e0e0e0; border-radius:6px; background:#fff;
-                    box-shadow: 0 1px 3px rgba(0,0,0,0.04); font-family: Arial, sans-serif; line-height:1.45;
-                    color:#222; max-width:100%; overflow:auto;">
-            <!-- Program HTML injection goes here -->
-        </div>
-    </div>
-</section>
-
 <!-- Image catalogue -->
 <section class="w3-container w3-border w3-padding w3-margin">
     <h3>Image catalogue: </h3>

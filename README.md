@@ -55,7 +55,6 @@ Open http://localhost:5000 and log in with password `show-demo`.
 
 Hover any graph node and click ℹ to read the full LLM description without leaving the graph.
 
-**[B.] Workshop generator** — select artworks from the catalogue, set a theme and audience, and generate a full multi-day workshop programme as HTML.
 
 **Evaluation mode** (/eval) — side-by-side three-panel interface (text / image / combined) used for the thesis expert study. Rate strategy preference, click edges to rate individual connections, submit results to `evaluations/results.json`.
 
