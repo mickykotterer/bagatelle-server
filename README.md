@@ -37,7 +37,7 @@ python app.py
 
 Open http://localhost:5000 and log in with password `show-demo`.
 
-**Note:** The CLIP image model (~800 MB) downloads automatically on first use and is cached after that.
+**Note:** The CLIP image model (~1.7 GB) downloads automatically on first use and is cached after that.
 
 ---
 
@@ -45,14 +45,13 @@ Open http://localhost:5000 and log in with password `show-demo`.
 
 **[A.] Search for images** — enter a text query to find artworks by description (text), visual appearance (image), or both (combined). Optional LLM refinement filters results that don't match the query.
 
-**Graph exploration** — click any artwork to build a semantic graph. Four modes:
+**Graph exploration** — click any artwork to build a semantic graph. Five modes:
 
 - **Text** — nearest neighbours by MiniLM embedding of LLM-generated descriptions. Best for medical theme, diagnosis, historical context.
 - **Image** — nearest neighbours by CLIP visual embedding. Best for visual style, medium, composition.
 - **Combined** — blends text + image scores with a configurable weight slider.
 - **Query-targeted** — steers expansion toward a concept you type (e.g. "surgery as public spectacle").
-
-Toggle **LLM confirm edges** to have Claude validate each connection and write a short explanation before the edge is drawn.
+- **LLM-confirmed** — any of the above modes with Claude validating each edge and writing a short explanation before it is drawn.
 
 Hover any graph node and click ℹ to read the full LLM description without leaving the graph.
 
