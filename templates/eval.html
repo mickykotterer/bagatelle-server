@@ -42,14 +42,12 @@
         }
         #start-btn:hover { background: #27ae60; }
 
-        /* ── Task / Free bars ────────────────────────────── */
+        /* ── Task bar ────────────────────────────────────── */
         #eval-workspace { display: none; flex-direction: column; height: calc(100vh - 48px); }
-        #task-bar, #free-bar {
+        #task-bar {
             background: #fff; border-bottom: 1px solid #ddd;
-            padding: 8px 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+            padding: 8px 16px; display: none; align-items: center; gap: 12px; flex-wrap: wrap;
         }
-        #task-bar { display: none; }
-        #free-bar { display: none; }
         .task-progress { font-weight: 600; font-size: 0.95rem; }
         .task-artwork { color: #555; }
         #seed-thumb { height: 48px; border-radius: 4px; border: 2px solid #1a1a2e; }
@@ -60,17 +58,6 @@
         .bar-btn:hover { background: #f0f0f0; }
         .bar-btn.primary { background: #1a1a2e; color: #fff; border-color: #1a1a2e; }
         .bar-btn.primary:hover { background: #2c2c4e; }
-        #free-bar input[type=text] {
-            flex: 1; min-width: 200px; padding: 6px 10px;
-            border: 1px solid #ccc; border-radius: 4px;
-        }
-        #free-results { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
-        .free-thumb {
-            height: 60px; border-radius: 4px; cursor: pointer;
-            border: 2px solid transparent; transition: border-color .2s;
-        }
-        .free-thumb:hover { border-color: #2ecc71; }
-        .free-thumb.selected { border-color: #1a1a2e; }
 
         /* ── Panels row ──────────────────────────────────── */
         #panels-row {
@@ -243,36 +230,6 @@
         }
         #node-info-preview { font-size: 0.82rem; color: #444; margin: 0; line-height: 1.5; }
 
-        /* ── Free-mode selection lightbox ───────────────── */
-        #free-select-lightbox {
-            position: fixed; inset: 0; background: rgba(0,0,0,.82);
-            z-index: 2000; display: none; align-items: center; justify-content: center;
-        }
-        #free-select-lightbox.visible { display: flex; }
-        #free-select-content {
-            background: #fff; border-radius: 10px; padding: 20px;
-            max-width: 520px; width: 90vw; text-align: center;
-            box-shadow: 0 8px 40px rgba(0,0,0,.4);
-        }
-        #free-select-content img {
-            max-width: 100%; max-height: 55vh; border-radius: 6px; margin-bottom: 12px;
-        }
-        #free-select-name {
-            font-size: 0.9rem; color: #444; margin-bottom: 14px;
-            word-break: break-all;
-        }
-        .free-select-btns { display: flex; gap: 10px; justify-content: center; }
-        .free-pick-btn {
-            padding: 10px 22px; background: #1a1a2e; color: #fff;
-            border: none; border-radius: 6px; cursor: pointer; font-size: 0.95rem; font-weight: 600;
-        }
-        .free-pick-btn:hover { background: #2c2c4e; }
-        .free-back-btn {
-            padding: 10px 22px; background: #fff; color: #444;
-            border: 1px solid #bbb; border-radius: 6px; cursor: pointer; font-size: 0.95rem;
-        }
-        .free-back-btn:hover { background: #f0f0f0; }
-
         /* ── Seed lightbox ───────────────────────────────── */
         #img-lightbox {
             position: fixed; inset: 0; background: rgba(0,0,0,.82);
@@ -309,18 +266,8 @@
     <label for="evaluator-name">Your name / evaluator ID</label>
     <input type="text" id="evaluator-name" placeholder="e.g. Dr. Smith" autocomplete="off"/>
 
-    <label>Evaluation mode</label>
-    <div style="margin-bottom: 16px;">
-        <button class="mode-btn active" id="btn-structured" onclick="selectMode('structured')">
-            📋 Structured (16 seed artworks)
-        </button>
-        <button class="mode-btn" id="btn-free" onclick="selectMode('free')">
-            🔍 Free exploration
-        </button>
-    </div>
     <p style="color:#666; font-size:0.85rem; margin: 0 0 12px;">
-        <strong>Structured:</strong> Rate 16 pre-selected artworks side by side across two strategies.<br/>
-        <strong>Free:</strong> Search any artwork, build graphs freely, and rate edges as you go.
+        Rate 16 pre-selected artworks side by side across three strategies.
     </p>
     <button id="start-btn" onclick="startEval()">Start evaluation →</button>
 </div>
@@ -340,18 +287,6 @@
         <span id="task-status" style="font-size:0.8rem; color:#888;"></span>
     </div>
 
-    <!-- Free bar (free mode) -->
-    <div id="free-bar">
-        <input type="text" id="free-query" placeholder="Search for an artwork…" onkeydown="if(event.key==='Enter')freeSearch()"/>
-        <select id="free-search-mode" style="padding:5px 8px; border:1px solid #ccc; border-radius:4px;">
-            <option value="text">Text</option>
-            <option value="image">Image</option>
-            <option value="combined">Combined</option>
-        </select>
-        <button class="bar-btn primary" onclick="freeSearch()">Search</button>
-        <span id="free-status" style="font-size:0.8rem; color:#888;"></span>
-        <div id="free-results-row" style="width:100%; display:flex; gap:6px; flex-wrap:wrap; padding-top:4px;"></div>
-    </div>
 
     <!-- ── Three-panel comparison ──────────────────────── -->
     <div id="panels-row">
@@ -460,17 +395,6 @@
     </div>
 </div>
 
-<!-- ── Free-mode selection lightbox ─────────────────────── -->
-<div id="free-select-lightbox">
-    <div id="free-select-content">
-        <img id="free-select-img" src="" alt=""/>
-        <div id="free-select-name"></div>
-        <div class="free-select-btns">
-            <button class="free-pick-btn" onclick="confirmFreeSelect()">✓ Pick this artwork</button>
-            <button class="free-back-btn" onclick="closeFreeSelectLightbox()">← Choose different</button>
-        </div>
-    </div>
-</div>
 
 <!-- ── Seed image lightbox ───────────────────────────────── -->
 <div id="img-lightbox" onclick="this.classList.remove('visible')">
@@ -527,7 +451,7 @@ const SEED_ARTWORKS = [
 // ════════════════════════════════════════════════════════
 //  STATE
 // ════════════════════════════════════════════════════════
-let evalMode = 'structured';  // 'structured' | 'free'
+const evalMode = 'structured';
 let evaluatorName = '';
 let taskIndex = 0;
 
@@ -884,12 +808,6 @@ const panels = {
 // ════════════════════════════════════════════════════════
 //  SESSION SETUP
 // ════════════════════════════════════════════════════════
-function selectMode(mode) {
-    evalMode = mode;
-    document.getElementById('btn-structured').classList.toggle('active', mode === 'structured');
-    document.getElementById('btn-free').classList.toggle('active', mode === 'free');
-}
-
 function startEval() {
     evaluatorName = document.getElementById('evaluator-name').value.trim();
     if (!evaluatorName) { alert('Please enter your name / evaluator ID.'); return; }
@@ -897,14 +815,10 @@ function startEval() {
     document.getElementById('session-setup').style.display = 'none';
     document.getElementById('eval-workspace').style.display = 'flex';
     document.getElementById('header-info').textContent =
-        `Evaluator: ${evaluatorName}  |  Mode: ${evalMode === 'structured' ? 'Structured' : 'Free'}`;
+        `Evaluator: ${evaluatorName}  |  Structured mode`;
 
-    if (evalMode === 'structured') {
-        document.getElementById('task-bar').style.display = 'flex';
-        loadTask(0);
-    } else {
-        document.getElementById('free-bar').style.display = 'flex';
-    }
+    document.getElementById('task-bar').style.display = 'flex';
+    loadTask(0);
 }
 
 // ════════════════════════════════════════════════════════
@@ -957,87 +871,6 @@ async function loadBothPanels() {
                      : `${loaded}/3 panels loaded.`;
 }
 
-// ════════════════════════════════════════════════════════
-//  FREE MODE
-// ════════════════════════════════════════════════════════
-async function freeSearch() {
-    const query = document.getElementById('free-query').value.trim();
-    if (!query) return;
-    const mode = document.getElementById('free-search-mode').value;
-    const statusEl = document.getElementById('free-status');
-    const resultsRow = document.getElementById('free-results-row');
-
-    statusEl.textContent = '⏳ Searching…';
-    resultsRow.innerHTML = '';
-
-    try {
-        const resp = await fetch('/retrieve', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ question: query, k: 8, search_mode: mode }),
-        });
-        const data = await resp.json();
-        const paths = data.response || [];
-
-        statusEl.textContent = paths.length ? `${paths.length} results. Click one to load in all three panels.` : 'No results.';
-
-        paths.forEach(p => {
-            const img = document.createElement('img');
-            img.src = '/' + p;
-            img.className = 'free-thumb';
-            img.title = getFileName(p);
-            img.addEventListener('click', () => openFreeSelectLightbox(p));
-            resultsRow.appendChild(img);
-        });
-    } catch (e) {
-        statusEl.textContent = `Error: ${e.message}`;
-    }
-}
-
-let pendingFreeArtwork = null;
-
-function openFreeSelectLightbox(imagePath) {
-    pendingFreeArtwork = imagePath;
-    document.getElementById('free-select-img').src = '/' + imagePath;
-    document.getElementById('free-select-name').textContent = getFileName(imagePath);
-    document.getElementById('free-select-lightbox').classList.add('visible');
-}
-
-function closeFreeSelectLightbox() {
-    document.getElementById('free-select-lightbox').classList.remove('visible');
-    pendingFreeArtwork = null;
-}
-
-async function confirmFreeSelect() {
-    if (!pendingFreeArtwork) return;
-    const path = pendingFreeArtwork;
-    closeFreeSelectLightbox();
-
-    // Highlight selection in results row
-    document.querySelectorAll('.free-thumb').forEach(t => t.classList.remove('selected'));
-    const sel = document.querySelector(`.free-thumb[src="/${path}"]`);
-    if (sel) sel.classList.add('selected');
-
-    await loadFreeArtwork(path);
-}
-
-async function loadFreeArtwork(imagePath) {
-    document.querySelectorAll('.free-thumb').forEach(t => t.classList.remove('selected'));
-    const selected = document.querySelector(`.free-thumb[src="/${imagePath}"]`);
-    if (selected) selected.classList.add('selected');
-
-    Object.values(panels).forEach(p => p.clear());
-
-    const [dataT, dataI, dataC] = await Promise.all([
-        panels.text.fetchRelated(imagePath, []),
-        panels.image.fetchRelated(imagePath, []),
-        panels.combined.fetchRelated(imagePath, []),
-    ]);
-
-    if (dataT) panels.text.addExpansion(dataT.selected.image_path, dataT.related, dataT.selected);
-    if (dataI) panels.image.addExpansion(dataI.selected.image_path, dataI.related, dataI.selected);
-    if (dataC) panels.combined.addExpansion(dataC.selected.image_path, dataC.related, dataC.selected);
-}
 
 // ════════════════════════════════════════════════════════
 //  EDGE RATING

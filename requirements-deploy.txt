@@ -8,6 +8,7 @@ python-dotenv
 anthropic==0.94.1
 openai==2.31.0
 qdrant-client==1.17.1
+fastembed==0.4.2
 beautifulsoup4
 httpx
 Requests

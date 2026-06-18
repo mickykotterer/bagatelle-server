@@ -1,4 +1,5 @@
 import csv
+import gc
 import json
 from flask import Flask, render_template, request, redirect, jsonify, session
 from datetime import timedelta
@@ -26,6 +27,11 @@ load_dotenv()
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Render automatically sets RENDER=true in the environment.
+# Used to disable image/combined search in the UI (CLIP model is too large for 512MB).
+# All graph modes and text search still work on Render.
+IS_RENDER = bool(os.getenv("RENDER"))
 
 
 def create_app():
@@ -188,7 +194,7 @@ def gallery():
     if not is_ajax:
         return redirect('/')
     bagatelle_data = load_bagatelle_file_list()
-    return render_template("gallery.html", bagatelle_data=json.dumps(bagatelle_data))
+    return render_template("gallery.html", bagatelle_data=json.dumps(bagatelle_data), is_render=IS_RENDER)
 
 
 @app.route('/login', methods=['POST'])
@@ -426,10 +432,13 @@ def related():
                 item["llm_judgement"] = None
                 item["relation_type"] = ""
 
-        return jsonify(related_data)
+        response = jsonify(related_data)
+        gc.collect()  # help Python release memory between hops on memory-constrained deployments
+        return response
 
     except Exception as e:
         print(e)
+        gc.collect()
         return jsonify({
             "selected": {
                 "image_path": image_path,
