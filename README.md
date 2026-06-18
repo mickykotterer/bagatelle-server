@@ -2,7 +2,7 @@
 
 This is a bachelor thesis project (University of Amsterdam). It extends the original Bagatelle artwork server with a knowledge graph layer: instead of keyword search, users navigate ~600 art-in-medicine artworks by following semantic connections.
 
-**Original Bagatelle server:** https://github.com/mikkonenm/bagatelle-server
+**Original Bagatelle server:** https://github.com/albatros13/bagatelle-server
 
 ---
 
