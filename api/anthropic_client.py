@@ -84,6 +84,7 @@ def ask_anthropic_llm(question, image_paths, prompt, model="claude-sonnet-4-2025
                 "data": img["data"],
             },
         })
+    del image_inputs  # free base64 buffers before the API call
 
     # Add the main question
     content.append({"type": "text", "text": f"Question: {question}"})
@@ -97,10 +98,11 @@ def ask_anthropic_llm(question, image_paths, prompt, model="claude-sonnet-4-2025
             timeout=120
         )
 
-        # Extract text blocks from response
-        return "".join(
+        result = "".join(
             block.text for block in response.content if block.type == "text"
         )
+        del content, response
+        return result
 
     except APIError as e:
         print(f"⚠️ Anthropic API error: {e}")

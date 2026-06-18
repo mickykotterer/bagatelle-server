@@ -48,33 +48,26 @@ def ask_openai_llm(question, image_paths, prompt, model="gpt-5"):
 
     image_inputs = [encode_image(path) for path in full_paths]
 
-    try:
-        resp = llm_client.chat.completions.create(
-            model=model,
-            timeout=120,
-            messages=[
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": prompt
-                        },
-                        *[
-                            {
-                                "type": "image_url",
-                                "image_url": {
-                                    "url": f"data:image/png;base64,{image}"
-                                }
-                            }
-                            for image in image_inputs
-                        ],
-                        {"type": "text", "text": f"Question: {question}"}
-                    ]
-                }
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {"type": "text", "text": prompt},
+                *[
+                    {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{image}"}}
+                    for image in image_inputs
+                ],
+                {"type": "text", "text": f"Question: {question}"}
             ]
-        )
-        return resp.choices[0].message.content
+        }
+    ]
+    del image_inputs  # free base64 buffers before the API call
+
+    try:
+        resp = llm_client.chat.completions.create(model=model, timeout=120, messages=messages)
+        result = resp.choices[0].message.content
+        del messages, resp
+        return result
     except Exception as e:
         print(f"⚠️ LLM request failed: {e}")
         return "LLM request failed: service temporarily unavailable or timed out"

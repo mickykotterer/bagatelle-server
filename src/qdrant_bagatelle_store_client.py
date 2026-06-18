@@ -325,7 +325,7 @@ def _get_related_combined(image_path, top_k=3, exclude_paths=None,
         exclude_paths = []
     exclude_paths = set(exclude_paths)
 
-    OVERFETCH = 60  # fetch more candidates so merging has enough to filter from
+    OVERFETCH = 30  # fetch more candidates so merging has enough to filter from
 
     # --- Retrieve stored vectors for the selected artwork ---
     _text_col  = text_collection  or TEXT_CLIP_COLLECTION
@@ -552,8 +552,8 @@ def _get_related_by_stored_vector(
     print(f"[related] Selected: {selected_title} | mode={primary_collection}/{vector_name}")
 
     # 2. Query for nearest neighbours using the stored vector
-    search_limit = max(top_k + 20, top_k + len(exclude_paths) + 10)
-    search_limit = min(search_limit, 100)
+    search_limit = max(top_k + 10, top_k + len(exclude_paths) + 5)
+    search_limit = min(search_limit, 50)
 
     response = client.query_points(
         collection_name=primary_collection,
@@ -691,8 +691,8 @@ def _get_related_query_targeted(image_path, query, top_k=3,
     print(f"  query='{query}' | query_weight={query_weight:.2f} | artwork_weight={artwork_weight:.2f}")
 
     # 4. Query with the blended vector
-    search_limit = max(top_k + 20, top_k + len(exclude_paths) + 10)
-    search_limit = min(search_limit, 100)
+    search_limit = max(top_k + 10, top_k + len(exclude_paths) + 5)
+    search_limit = min(search_limit, 50)
 
     response = client.query_points(
         collection_name=_text_col,
